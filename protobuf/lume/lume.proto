@@ -1,0 +1,53 @@
+// File: lume.proto
+syntax = "proto3";
+
+package lumo.v1.lume;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/struct.proto";
+
+option go_package = "github.com/mcdev12/lumo/go/internal/genproto/protobuf/lume;lume";
+
+// Represents a single node (“Lume”) within a Lumo
+message Lume {
+  // Auto incrementing id
+  int64 id = 1;
+
+  // UUID of this Lume
+  string lume_id = 2;
+
+  // UUID of the parent Lumo graph
+  string lumo_id = 3;
+
+  // Display label (e.g., “Eiffel Tower”, “Hotel Paris”)
+  string label = 4;
+
+  // The type/category of this Lume
+  LumeType type = 5;
+
+  // Optional free‐text description
+  string description = 6;
+
+  // Arbitrary metadata (stored as JSON key/value pairs)
+  google.protobuf.Struct metadata = 7;
+
+  // When this Lume was created
+  google.protobuf.Timestamp created_at = 8;
+
+  // When this Lume was last updated
+  google.protobuf.Timestamp updated_at = 9;
+}
+
+
+// Enumerates the possible Lume (node) types
+enum LumeType {
+  LUME_TYPE_UNSPECIFIED = 0;
+  LUME_TYPE_STOP = 1;            // e.g., a city or waypoint
+  LUME_TYPE_ACCOMMODATION = 2;   // e.g., a hotel or lodging
+  LUME_TYPE_POINT_OF_INTEREST = 3; // e.g., museum, park
+  LUME_TYPE_MEAL = 4;            // e.g., restaurant, café
+  LUME_TYPE_TRANSPORT = 5;       // e.g., airport, train station
+  LUME_TYPE_CUSTOM = 6;          // User‐defined/custom node
+}
+
+

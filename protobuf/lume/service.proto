@@ -1,0 +1,74 @@
+// File: lume.proto
+syntax = "proto3";
+
+package lumo.v1.lume;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/struct.proto";
+import "protobuf/lume/lume.proto";
+
+option go_package = "github.com/mcdev12/lumo/go/internal/genproto/protobuf/lume;lume";
+
+
+// Service for managing Lume entities (nodes)
+service LumeService {
+  rpc CreateLume(CreateLumeRequest) returns (CreateLumeResponse);
+  rpc GetLume(GetLumeRequest) returns (GetLumeResponse);
+  rpc ListLumes(ListLumesRequest) returns (ListLumesResponse);
+  rpc UpdateLume(UpdateLumeRequest) returns (UpdateLumeResponse);
+  rpc DeleteLume(DeleteLumeRequest) returns (DeleteLumeResponse);
+}
+// Request to create a new Lume
+message CreateLumeRequest {
+  Lume lume = 1;
+}
+
+// Response after creating a Lume
+message CreateLumeResponse {
+  Lume lume = 1;
+}
+
+// Request to fetch one Lume by ID
+message GetLumeRequest {
+  string id = 1;
+}
+
+// Response containing a single Lume
+message GetLumeResponse {
+  Lume lume = 1;
+}
+
+// Request to fetch all Lumes under a given Lumo
+message ListLumesRequest {
+  // UUID of the Lumo graph
+  string lumo_id = 1;
+
+  // Pagination fields
+  int32 page_size = 2;
+  string page_token = 3;
+}
+
+// Response containing a list of Lumes
+message ListLumesResponse {
+  repeated Lume lumos = 1;
+  string next_page_token = 2;
+}
+
+// Request to update an existing Lume
+message UpdateLumeRequest {
+  Lume lume = 1;
+}
+
+// Response after updating a Lume
+message UpdateLumeResponse {
+  Lume lume = 1;
+}
+
+// Request to delete a Lume
+message DeleteLumeRequest {
+  string id = 1;
+}
+
+// Response after deletion
+message DeleteLumeResponse {}
+

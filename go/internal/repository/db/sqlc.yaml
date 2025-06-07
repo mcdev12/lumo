@@ -1,0 +1,22 @@
+version: "2"
+
+sql:
+  - engine: "postgresql"
+    # Because sqlc.yaml is in go/internal/repository/db/,
+    # these globs are relative to that folder:
+    schema:
+      - "schema/*.sql"
+    queries:
+      - "queries/*.sql"
+    gen:
+      go:
+        # The Go package name inside each generated file
+        package: "sqlc"
+        # Where sqlc should put the generated .go files, relative to the repo root
+        out: "sqlc"
+        # Configuration options
+        emit_json_tags: true
+        emit_prepared_queries: false
+        emit_interface: true
+        emit_exact_table_names: false
+        emit_empty_slices: false
