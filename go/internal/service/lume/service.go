@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 	"strconv"
+	"time"
 
 	"connectrpc.com/connect"
-	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	applume "github.com/mcdev12/lumo/go/internal/app/lume"
@@ -25,10 +25,13 @@ type LumeApp interface {
 	GetLumeByID(ctx context.Context, id int64) (*modellume.Lume, error)
 	GetLumeByLumeID(ctx context.Context, lumeID string) (*modellume.Lume, error)
 	ListLumesByLumoID(ctx context.Context, req applume.ListLumesRequest) ([]*modellume.Lume, error)
+	ListLumesByType(ctx context.Context, req applume.ListLumesByTypeRequest) ([]*modellume.Lume, error)
+	SearchLumesByLocation(ctx context.Context, req applume.SearchLumesByLocationRequest) ([]*modellume.Lume, error)
 	UpdateLume(ctx context.Context, id int64, req applume.UpdateLumeRequest) (*modellume.Lume, error)
 	UpdateLumeByLumeID(ctx context.Context, lumeID string, req applume.UpdateLumeRequest) (*modellume.Lume, error)
 	DeleteLume(ctx context.Context, id int64) error
 	DeleteLumeByLumeID(ctx context.Context, lumeID string) error
+	CountLumesByLumo(ctx context.Context, lumoID string) (int64, error)
 }
 
 // Service implements the LumeServiceHandler interface
@@ -72,7 +75,7 @@ func (s *Service) CreateLume(ctx context.Context, req *connect.Request[pb.Create
 
 // GetLume retrieves a Lume by ID
 func (s *Service) GetLume(ctx context.Context, req *connect.Request[pb.GetLumeRequest]) (*connect.Response[pb.GetLumeResponse], error) {
-	requestID := req.Msg.GetId()
+	requestID := req.Msg.GetLumeId()
 
 	// Try to parse as int64 first (internal ID), then as UUID (lume_id)
 	var domainLume *modellume.Lume
@@ -117,13 +120,30 @@ func (s *Service) ListLumes(ctx context.Context, req *connect.Request[pb.ListLum
 		offset = int32(parsedOffset)
 	}
 
-	appReq := applume.ListLumesRequest{
-		LumoID: req.Msg.GetLumoId(),
-		Limit:  limit,
-		Offset: offset,
+	// Check if we need to filter by type
+	lumeType := req.Msg.GetType()
+	var domainLumes []*modellume.Lume
+	var err error
+
+	if lumeType != pb.LumeType_LUME_TYPE_UNSPECIFIED {
+		// Filter by type
+		typeReq := applume.ListLumesByTypeRequest{
+			LumoID: req.Msg.GetUserId(), // Note: The proto uses user_id but we need lumo_id
+			Type:   modellume.LumeType(lumeType.String()),
+			Limit:  limit,
+			Offset: offset,
+		}
+		domainLumes, err = s.app.ListLumesByType(ctx, typeReq)
+	} else {
+		// List all lumes for the lumo
+		listReq := applume.ListLumesRequest{
+			LumoID: req.Msg.GetUserId(), // Note: The proto uses user_id but we need lumo_id
+			Limit:  limit,
+			Offset: offset,
+		}
+		domainLumes, err = s.app.ListLumesByLumoID(ctx, listReq)
 	}
 
-	domainLumes, err := s.app.ListLumesByLumoID(ctx, appReq)
 	if err != nil {
 		return nil, s.mapErrorToConnectError(err)
 	}
@@ -144,7 +164,7 @@ func (s *Service) ListLumes(ctx context.Context, req *connect.Request[pb.ListLum
 	}
 
 	return connect.NewResponse(&pb.ListLumesResponse{
-		Lumos:         pbLumes,
+		Lumes:         pbLumes,
 		NextPageToken: nextPageToken,
 	}), nil
 }
@@ -179,7 +199,7 @@ func (s *Service) UpdateLume(ctx context.Context, req *connect.Request[pb.Update
 
 // DeleteLume deletes a Lume by ID
 func (s *Service) DeleteLume(ctx context.Context, req *connect.Request[pb.DeleteLumeRequest]) (*connect.Response[pb.DeleteLumeResponse], error) {
-	requestID := req.Msg.GetId()
+	requestID := req.Msg.GetLumeId()
 
 	// Try to parse as int64 first (internal ID), then as UUID (lume_id)
 	var err error
@@ -203,60 +223,152 @@ func (s *Service) DeleteLume(ctx context.Context, req *connect.Request[pb.Delete
 
 // toAppCreateRequest converts a protobuf Lume to an app CreateLumeRequest
 func (s *Service) toAppCreateRequest(pbLume *pb.Lume) (applume.CreateLumeRequest, error) {
-	metadata := make(map[string]interface{})
-	if pbLume.GetMetadata() != nil {
-		metadata = pbLume.GetMetadata().AsMap()
+	// Convert timestamps to time.Time pointers
+	var dateStart, dateEnd *time.Time
+	if pbLume.GetDateStart() != nil {
+		t := pbLume.GetDateStart().AsTime()
+		dateStart = &t
+	}
+	if pbLume.GetDateEnd() != nil {
+		t := pbLume.GetDateEnd().AsTime()
+		dateEnd = &t
+	}
+
+	// Convert optional fields
+	var latitude, longitude *float64
+	var address, bookingLink *string
+
+	if pbLume.GetLatitude() != 0 {
+		lat := pbLume.GetLatitude()
+		latitude = &lat
+	}
+	if pbLume.GetLongitude() != 0 {
+		lng := pbLume.GetLongitude()
+		longitude = &lng
+	}
+	if pbLume.GetAddress() != "" {
+		addr := pbLume.GetAddress()
+		address = &addr
+	}
+	if pbLume.GetBookingLink() != "" {
+		link := pbLume.GetBookingLink()
+		bookingLink = &link
 	}
 
 	return applume.CreateLumeRequest{
-		LumoID:      pbLume.GetLumoId(), // Parent Lumo UUID
-		Label:       pbLume.GetLabel(),
-		Type:        modellume.LumeType(pbLume.GetType().String()),
-		Description: pbLume.GetDescription(),
-		Metadata:    metadata,
+		LumoID:       pbLume.GetLumoId(),
+		Label:        pbLume.GetName(),
+		Type:         modellume.LumeType(pbLume.GetType().String()),
+		Description:  pbLume.GetDescription(),
+		DateStart:    dateStart,
+		DateEnd:      dateEnd,
+		Latitude:     latitude,
+		Longitude:    longitude,
+		Address:      address,
+		Images:       pbLume.GetImages(),
+		CategoryTags: pbLume.GetCategoryTags(),
+		BookingLink:  bookingLink,
 	}, nil
 }
 
 // toAppUpdateRequest converts a protobuf Lume to an app UpdateLumeRequest
 func (s *Service) toAppUpdateRequest(pbLume *pb.Lume) (applume.UpdateLumeRequest, error) {
-	metadata := make(map[string]interface{})
-	if pbLume.GetMetadata() != nil {
-		metadata = pbLume.GetMetadata().AsMap()
+	// Convert timestamps to time.Time pointers
+	var dateStart, dateEnd *time.Time
+	if pbLume.GetDateStart() != nil {
+		t := pbLume.GetDateStart().AsTime()
+		dateStart = &t
+	}
+	if pbLume.GetDateEnd() != nil {
+		t := pbLume.GetDateEnd().AsTime()
+		dateEnd = &t
+	}
+
+	// Convert optional fields
+	var latitude, longitude *float64
+	var address, bookingLink *string
+
+	if pbLume.GetLatitude() != 0 {
+		lat := pbLume.GetLatitude()
+		latitude = &lat
+	}
+	if pbLume.GetLongitude() != 0 {
+		lng := pbLume.GetLongitude()
+		longitude = &lng
+	}
+	if pbLume.GetAddress() != "" {
+		addr := pbLume.GetAddress()
+		address = &addr
+	}
+	if pbLume.GetBookingLink() != "" {
+		link := pbLume.GetBookingLink()
+		bookingLink = &link
 	}
 
 	return applume.UpdateLumeRequest{
-		Label:       pbLume.GetLabel(),
-		Type:        modellume.LumeType(pbLume.GetType().String()),
-		Description: pbLume.GetDescription(),
-		Metadata:    metadata,
+		Label:        pbLume.GetName(),
+		Type:         modellume.LumeType(pbLume.GetType().String()),
+		Description:  pbLume.GetDescription(),
+		DateStart:    dateStart,
+		DateEnd:      dateEnd,
+		Latitude:     latitude,
+		Longitude:    longitude,
+		Address:      address,
+		Images:       pbLume.GetImages(),
+		CategoryTags: pbLume.GetCategoryTags(),
+		BookingLink:  bookingLink,
 	}, nil
 }
 
 // toPbLume converts a domain Lume to a protobuf Lume
 func (s *Service) toPbLume(domainLume *modellume.Lume) (*pb.Lume, error) {
-	var metadata *structpb.Struct
-	var err error
-	if domainLume.Metadata != nil {
-		metadata, err = structpb.NewStruct(domainLume.Metadata)
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	pbLumeType, err := s.toPbLumeType(domainLume.Type)
 	if err != nil {
 		return nil, err
 	}
 
+	// Convert timestamps
+	var dateStart, dateEnd *timestamppb.Timestamp
+	if domainLume.DateStart != nil {
+		dateStart = timestamppb.New(*domainLume.DateStart)
+	}
+	if domainLume.DateEnd != nil {
+		dateEnd = timestamppb.New(*domainLume.DateEnd)
+	}
+
+	// Convert optional fields
+	var latitude, longitude float64
+	var address, bookingLink string
+
+	if domainLume.Latitude != nil {
+		latitude = *domainLume.Latitude
+	}
+	if domainLume.Longitude != nil {
+		longitude = *domainLume.Longitude
+	}
+	if domainLume.Address != nil {
+		address = *domainLume.Address
+	}
+	if domainLume.BookingLink != nil {
+		bookingLink = *domainLume.BookingLink
+	}
+
 	return &pb.Lume{
-		LumeId:      domainLume.LumeId, // Public UUID (string)
-		LumoId:      domainLume.LumoID, // Parent Lumo UUID (string)
-		Label:       domainLume.Label,
-		Type:        pbLumeType,
-		Description: domainLume.Description,
-		Metadata:    metadata,
-		CreatedAt:   timestamppb.New(domainLume.CreatedAt),
-		UpdatedAt:   timestamppb.New(domainLume.UpdatedAt),
+		LumeId:       domainLume.LumeID,
+		LumoId:       domainLume.LumoID,
+		Type:         pbLumeType,
+		Name:         domainLume.Name,
+		DateStart:    dateStart,
+		DateEnd:      dateEnd,
+		Latitude:     latitude,
+		Longitude:    longitude,
+		Address:      address,
+		Description:  domainLume.Description,
+		Images:       domainLume.Images,
+		CategoryTags: domainLume.CategoryTags,
+		BookingLink:  bookingLink,
+		CreatedAt:    timestamppb.New(domainLume.CreatedAt),
+		UpdatedAt:    timestamppb.New(domainLume.UpdatedAt),
 	}, nil
 }
 
@@ -265,16 +377,22 @@ func (s *Service) toPbLumeType(domainType modellume.LumeType) (pb.LumeType, erro
 	switch domainType {
 	case modellume.LumeTypeUnspecified:
 		return pb.LumeType_LUME_TYPE_UNSPECIFIED, nil
-	case modellume.LumeTypeStop:
-		return pb.LumeType_LUME_TYPE_STOP, nil
+	case modellume.LumeTypeCity:
+		return pb.LumeType_LUME_TYPE_CITY, nil
+	case modellume.LumeTypeAttraction:
+		return pb.LumeType_LUME_TYPE_ATTRACTION, nil
 	case modellume.LumeTypeAccommodation:
 		return pb.LumeType_LUME_TYPE_ACCOMMODATION, nil
-	case modellume.LumeTypePointOfInterest:
-		return pb.LumeType_LUME_TYPE_POINT_OF_INTEREST, nil
-	case modellume.LumeTypeMeal:
-		return pb.LumeType_LUME_TYPE_MEAL, nil
-	case modellume.LumeTypeTransport:
-		return pb.LumeType_LUME_TYPE_TRANSPORT, nil
+	case modellume.LumeTypeRestaurant:
+		return pb.LumeType_LUME_TYPE_RESTAURANT, nil
+	case modellume.LumeTypeTransportHub:
+		return pb.LumeType_LUME_TYPE_TRANSPORT_HUB, nil
+	case modellume.LumeTypeActivity:
+		return pb.LumeType_LUME_TYPE_ACTIVITY, nil
+	case modellume.LumeTypeShopping:
+		return pb.LumeType_LUME_TYPE_SHOPPING, nil
+	case modellume.LumeTypeEntertainment:
+		return pb.LumeType_LUME_TYPE_ENTERTAINMENT, nil
 	case modellume.LumeTypeCustom:
 		return pb.LumeType_LUME_TYPE_CUSTOM, nil
 	default:

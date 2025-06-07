@@ -11,11 +11,15 @@ import (
 )
 
 type Querier interface {
+	CountLumesByLumo(ctx context.Context, lumoID uuid.UUID) (int64, error)
 	CreateLume(ctx context.Context, arg CreateLumeParams) (Lume, error)
 	DeleteLume(ctx context.Context, id int64) error
+	DeleteLumeByLumeID(ctx context.Context, lumeID uuid.UUID) error
 	GetLumeByID(ctx context.Context, id int64) (Lume, error)
 	GetLumeByLumeID(ctx context.Context, lumeID uuid.UUID) (Lume, error)
 	ListLumesByLumoID(ctx context.Context, arg ListLumesByLumoIDParams) ([]Lume, error)
+	ListLumesByType(ctx context.Context, arg ListLumesByTypeParams) ([]Lume, error)
+	SearchLumesByLocation(ctx context.Context, arg SearchLumesByLocationParams) ([]Lume, error)
 	UpdateLume(ctx context.Context, arg UpdateLumeParams) (Lume, error)
 }
 

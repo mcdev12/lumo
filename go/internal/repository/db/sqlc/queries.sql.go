@@ -11,34 +11,67 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/sqlc-dev/pqtype"
+	"github.com/lib/pq"
 )
 
+const countLumesByLumo = `-- name: CountLumesByLumo :one
+SELECT COUNT(*) FROM lume WHERE lumo_id = $1
+`
+
+func (q *Queries) CountLumesByLumo(ctx context.Context, lumoID uuid.UUID) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countLumesByLumo, lumoID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createLume = `-- name: CreateLume :one
-INSERT INTO lume (lume_id, lumo_id, label, type, description, metadata, created_at, updated_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8)  -- $1 = lume_id (provided by Go!)
-RETURNING id, lume_id, lumo_id, label, type, description, metadata, created_at, updated_at
+INSERT INTO lume (
+    lume_id, lumo_id, type, name,
+    date_start, date_end, latitude, longitude,
+    address, description, images, category_tags,
+    booking_link, created_at, updated_at
+) VALUES (
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15
+) RETURNING id, lume_id, lumo_id, type, name,
+    date_start, date_end, latitude, longitude,
+    address, description, images, category_tags,
+    booking_link, created_at, updated_at
 `
 
 type CreateLumeParams struct {
-	LumeID      uuid.UUID             `json:"lume_id"`
-	LumoID      uuid.UUID             `json:"lumo_id"`
-	Label       string                `json:"label"`
-	Type        string                `json:"type"`
-	Description sql.NullString        `json:"description"`
-	Metadata    pqtype.NullRawMessage `json:"metadata"`
-	CreatedAt   time.Time             `json:"created_at"`
-	UpdatedAt   time.Time             `json:"updated_at"`
+	LumeID       uuid.UUID       `json:"lume_id"`
+	LumoID       uuid.UUID       `json:"lumo_id"`
+	Type         string          `json:"type"`
+	Name         string          `json:"name"`
+	DateStart    sql.NullTime    `json:"date_start"`
+	DateEnd      sql.NullTime    `json:"date_end"`
+	Latitude     sql.NullFloat64 `json:"latitude"`
+	Longitude    sql.NullFloat64 `json:"longitude"`
+	Address      sql.NullString  `json:"address"`
+	Description  sql.NullString  `json:"description"`
+	Images       []string        `json:"images"`
+	CategoryTags []string        `json:"category_tags"`
+	BookingLink  sql.NullString  `json:"booking_link"`
+	CreatedAt    time.Time       `json:"created_at"`
+	UpdatedAt    time.Time       `json:"updated_at"`
 }
 
 func (q *Queries) CreateLume(ctx context.Context, arg CreateLumeParams) (Lume, error) {
 	row := q.db.QueryRowContext(ctx, createLume,
 		arg.LumeID,
 		arg.LumoID,
-		arg.Label,
 		arg.Type,
+		arg.Name,
+		arg.DateStart,
+		arg.DateEnd,
+		arg.Latitude,
+		arg.Longitude,
+		arg.Address,
 		arg.Description,
-		arg.Metadata,
+		pq.Array(arg.Images),
+		pq.Array(arg.CategoryTags),
+		arg.BookingLink,
 		arg.CreatedAt,
 		arg.UpdatedAt,
 	)
@@ -47,10 +80,17 @@ func (q *Queries) CreateLume(ctx context.Context, arg CreateLumeParams) (Lume, e
 		&i.ID,
 		&i.LumeID,
 		&i.LumoID,
-		&i.Label,
 		&i.Type,
+		&i.Name,
+		&i.DateStart,
+		&i.DateEnd,
+		&i.Latitude,
+		&i.Longitude,
+		&i.Address,
 		&i.Description,
-		&i.Metadata,
+		pq.Array(&i.Images),
+		pq.Array(&i.CategoryTags),
+		&i.BookingLink,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -66,8 +106,20 @@ func (q *Queries) DeleteLume(ctx context.Context, id int64) error {
 	return err
 }
 
+const deleteLumeByLumeID = `-- name: DeleteLumeByLumeID :exec
+DELETE FROM lume WHERE lume_id = $1
+`
+
+func (q *Queries) DeleteLumeByLumeID(ctx context.Context, lumeID uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, deleteLumeByLumeID, lumeID)
+	return err
+}
+
 const getLumeByID = `-- name: GetLumeByID :one
-SELECT id, lume_id, lumo_id, label, type, description, metadata, created_at, updated_at
+SELECT id, lume_id, lumo_id, type, name,
+    date_start, date_end, latitude, longitude,
+    address, description, images, category_tags,
+    booking_link, created_at, updated_at
 FROM lume WHERE id = $1
 `
 
@@ -78,10 +130,17 @@ func (q *Queries) GetLumeByID(ctx context.Context, id int64) (Lume, error) {
 		&i.ID,
 		&i.LumeID,
 		&i.LumoID,
-		&i.Label,
 		&i.Type,
+		&i.Name,
+		&i.DateStart,
+		&i.DateEnd,
+		&i.Latitude,
+		&i.Longitude,
+		&i.Address,
 		&i.Description,
-		&i.Metadata,
+		pq.Array(&i.Images),
+		pq.Array(&i.CategoryTags),
+		&i.BookingLink,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -89,7 +148,10 @@ func (q *Queries) GetLumeByID(ctx context.Context, id int64) (Lume, error) {
 }
 
 const getLumeByLumeID = `-- name: GetLumeByLumeID :one
-SELECT id, lume_id, lumo_id, label, type, description, metadata, created_at, updated_at
+SELECT id, lume_id, lumo_id, type, name,
+    date_start, date_end, latitude, longitude,
+    address, description, images, category_tags,
+    booking_link, created_at, updated_at
 FROM lume WHERE lume_id = $1
 `
 
@@ -100,10 +162,17 @@ func (q *Queries) GetLumeByLumeID(ctx context.Context, lumeID uuid.UUID) (Lume, 
 		&i.ID,
 		&i.LumeID,
 		&i.LumoID,
-		&i.Label,
 		&i.Type,
+		&i.Name,
+		&i.DateStart,
+		&i.DateEnd,
+		&i.Latitude,
+		&i.Longitude,
+		&i.Address,
 		&i.Description,
-		&i.Metadata,
+		pq.Array(&i.Images),
+		pq.Array(&i.CategoryTags),
+		&i.BookingLink,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -111,7 +180,10 @@ func (q *Queries) GetLumeByLumeID(ctx context.Context, lumeID uuid.UUID) (Lume, 
 }
 
 const listLumesByLumoID = `-- name: ListLumesByLumoID :many
-SELECT id, lume_id, lumo_id, label, type, description, metadata, created_at, updated_at
+SELECT id, lume_id, lumo_id, type, name,
+    date_start, date_end, latitude, longitude,
+    address, description, images, category_tags,
+    booking_link, created_at, updated_at
 FROM lume 
 WHERE lumo_id = $1
 ORDER BY created_at DESC
@@ -137,10 +209,153 @@ func (q *Queries) ListLumesByLumoID(ctx context.Context, arg ListLumesByLumoIDPa
 			&i.ID,
 			&i.LumeID,
 			&i.LumoID,
-			&i.Label,
 			&i.Type,
+			&i.Name,
+			&i.DateStart,
+			&i.DateEnd,
+			&i.Latitude,
+			&i.Longitude,
+			&i.Address,
 			&i.Description,
-			&i.Metadata,
+			pq.Array(&i.Images),
+			pq.Array(&i.CategoryTags),
+			&i.BookingLink,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listLumesByType = `-- name: ListLumesByType :many
+SELECT id, lume_id, lumo_id, type, name,
+    date_start, date_end, latitude, longitude,
+    address, description, images, category_tags,
+    booking_link, created_at, updated_at
+FROM lume 
+WHERE lumo_id = $1 AND type = $2
+ORDER BY created_at DESC
+LIMIT $3 OFFSET $4
+`
+
+type ListLumesByTypeParams struct {
+	LumoID uuid.UUID `json:"lumo_id"`
+	Type   string    `json:"type"`
+	Limit  int32     `json:"limit"`
+	Offset int32     `json:"offset"`
+}
+
+func (q *Queries) ListLumesByType(ctx context.Context, arg ListLumesByTypeParams) ([]Lume, error) {
+	rows, err := q.db.QueryContext(ctx, listLumesByType,
+		arg.LumoID,
+		arg.Type,
+		arg.Limit,
+		arg.Offset,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Lume
+	for rows.Next() {
+		var i Lume
+		if err := rows.Scan(
+			&i.ID,
+			&i.LumeID,
+			&i.LumoID,
+			&i.Type,
+			&i.Name,
+			&i.DateStart,
+			&i.DateEnd,
+			&i.Latitude,
+			&i.Longitude,
+			&i.Address,
+			&i.Description,
+			pq.Array(&i.Images),
+			pq.Array(&i.CategoryTags),
+			&i.BookingLink,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const searchLumesByLocation = `-- name: SearchLumesByLocation :many
+SELECT id, lume_id, lumo_id, type, name,
+    date_start, date_end, latitude, longitude,
+    address, description, images, category_tags,
+    booking_link, created_at, updated_at
+FROM lume 
+WHERE lumo_id = $1 
+    AND latitude IS NOT NULL 
+    AND longitude IS NOT NULL
+    AND latitude BETWEEN $2 AND $3
+    AND longitude BETWEEN $4 AND $5
+ORDER BY created_at DESC
+LIMIT $6 OFFSET $7
+`
+
+type SearchLumesByLocationParams struct {
+	LumoID      uuid.UUID       `json:"lumo_id"`
+	Latitude    sql.NullFloat64 `json:"latitude"`
+	Latitude_2  sql.NullFloat64 `json:"latitude_2"`
+	Longitude   sql.NullFloat64 `json:"longitude"`
+	Longitude_2 sql.NullFloat64 `json:"longitude_2"`
+	Limit       int32           `json:"limit"`
+	Offset      int32           `json:"offset"`
+}
+
+func (q *Queries) SearchLumesByLocation(ctx context.Context, arg SearchLumesByLocationParams) ([]Lume, error) {
+	rows, err := q.db.QueryContext(ctx, searchLumesByLocation,
+		arg.LumoID,
+		arg.Latitude,
+		arg.Latitude_2,
+		arg.Longitude,
+		arg.Longitude_2,
+		arg.Limit,
+		arg.Offset,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Lume
+	for rows.Next() {
+		var i Lume
+		if err := rows.Scan(
+			&i.ID,
+			&i.LumeID,
+			&i.LumoID,
+			&i.Type,
+			&i.Name,
+			&i.DateStart,
+			&i.DateEnd,
+			&i.Latitude,
+			&i.Longitude,
+			&i.Address,
+			&i.Description,
+			pq.Array(&i.Images),
+			pq.Array(&i.CategoryTags),
+			&i.BookingLink,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -158,28 +373,56 @@ func (q *Queries) ListLumesByLumoID(ctx context.Context, arg ListLumesByLumoIDPa
 }
 
 const updateLume = `-- name: UpdateLume :one
-UPDATE lume 
-SET label = $2, type = $3, description = $4, metadata = $5, updated_at = $6
-WHERE id = $1
-RETURNING id, lume_id, lumo_id, label, type, description, metadata, created_at, updated_at
+UPDATE lume SET
+    name = $2,
+    type = $3,
+    date_start = $4,
+    date_end = $5,
+    latitude = $6,
+    longitude = $7,
+    address = $8,
+    description = $9,
+    images = $10,
+    category_tags = $11,
+    booking_link = $12,
+    updated_at = $13
+WHERE lume_id = $1
+RETURNING id, lume_id, lumo_id, type, name,
+    date_start, date_end, latitude, longitude,
+    address, description, images, category_tags,
+    booking_link, created_at, updated_at
 `
 
 type UpdateLumeParams struct {
-	ID          int64                 `json:"id"`
-	Label       string                `json:"label"`
-	Type        string                `json:"type"`
-	Description sql.NullString        `json:"description"`
-	Metadata    pqtype.NullRawMessage `json:"metadata"`
-	UpdatedAt   time.Time             `json:"updated_at"`
+	LumeID       uuid.UUID       `json:"lume_id"`
+	Name         string          `json:"name"`
+	Type         string          `json:"type"`
+	DateStart    sql.NullTime    `json:"date_start"`
+	DateEnd      sql.NullTime    `json:"date_end"`
+	Latitude     sql.NullFloat64 `json:"latitude"`
+	Longitude    sql.NullFloat64 `json:"longitude"`
+	Address      sql.NullString  `json:"address"`
+	Description  sql.NullString  `json:"description"`
+	Images       []string        `json:"images"`
+	CategoryTags []string        `json:"category_tags"`
+	BookingLink  sql.NullString  `json:"booking_link"`
+	UpdatedAt    time.Time       `json:"updated_at"`
 }
 
 func (q *Queries) UpdateLume(ctx context.Context, arg UpdateLumeParams) (Lume, error) {
 	row := q.db.QueryRowContext(ctx, updateLume,
-		arg.ID,
-		arg.Label,
+		arg.LumeID,
+		arg.Name,
 		arg.Type,
+		arg.DateStart,
+		arg.DateEnd,
+		arg.Latitude,
+		arg.Longitude,
+		arg.Address,
 		arg.Description,
-		arg.Metadata,
+		pq.Array(arg.Images),
+		pq.Array(arg.CategoryTags),
+		arg.BookingLink,
 		arg.UpdatedAt,
 	)
 	var i Lume
@@ -187,10 +430,17 @@ func (q *Queries) UpdateLume(ctx context.Context, arg UpdateLumeParams) (Lume, e
 		&i.ID,
 		&i.LumeID,
 		&i.LumoID,
-		&i.Label,
 		&i.Type,
+		&i.Name,
+		&i.DateStart,
+		&i.DateEnd,
+		&i.Latitude,
+		&i.Longitude,
+		&i.Address,
 		&i.Description,
-		&i.Metadata,
+		pq.Array(&i.Images),
+		pq.Array(&i.CategoryTags),
+		&i.BookingLink,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)

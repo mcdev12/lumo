@@ -9,17 +9,23 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/sqlc-dev/pqtype"
 )
 
 type Lume struct {
-	ID          int64                 `json:"id"`
-	LumeID      uuid.UUID             `json:"lume_id"`
-	LumoID      uuid.UUID             `json:"lumo_id"`
-	Label       string                `json:"label"`
-	Type        string                `json:"type"`
-	Description sql.NullString        `json:"description"`
-	Metadata    pqtype.NullRawMessage `json:"metadata"`
-	CreatedAt   time.Time             `json:"created_at"`
-	UpdatedAt   time.Time             `json:"updated_at"`
+	ID           int64           `json:"id"`
+	LumeID       uuid.UUID       `json:"lume_id"`
+	LumoID       uuid.UUID       `json:"lumo_id"`
+	Type         string          `json:"type"`
+	Name         string          `json:"name"`
+	DateStart    sql.NullTime    `json:"date_start"`
+	DateEnd      sql.NullTime    `json:"date_end"`
+	Latitude     sql.NullFloat64 `json:"latitude"`
+	Longitude    sql.NullFloat64 `json:"longitude"`
+	Address      sql.NullString  `json:"address"`
+	Description  sql.NullString  `json:"description"`
+	Images       []string        `json:"images"`
+	CategoryTags []string        `json:"category_tags"`
+	BookingLink  sql.NullString  `json:"booking_link"`
+	CreatedAt    time.Time       `json:"created_at"`
+	UpdatedAt    time.Time       `json:"updated_at"`
 }

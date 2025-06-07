@@ -1,45 +1,184 @@
 package lume
 
 import (
-	lumepb "github.com/mcdev12/lumo/go/internal/genproto/protobuf/lume"
+	"database/sql/driver"
+	"time"
 
-	"google.golang.org/protobuf/types/known/structpb"
+	"github.com/lib/pq"
 	"google.golang.org/protobuf/types/known/timestamppb"
+
+	lumepb "github.com/mcdev12/lumo/go/internal/genproto/protobuf/lume"
 )
 
-// ProtoToDomainLumeType converts the generated Protobuf enum into the domain LumeType.
-func ProtoToDomainLumeType(pbType lumepb.LumeType) LumeType {
-	switch pbType {
-	case lumepb.LumeType_LUME_TYPE_STOP:
-		return LumeTypeStop
-	case lumepb.LumeType_LUME_TYPE_ACCOMMODATION:
-		return LumeTypeAccommodation
-	case lumepb.LumeType_LUME_TYPE_POINT_OF_INTEREST:
-		return LumeTypePointOfInterest
-	case lumepb.LumeType_LUME_TYPE_MEAL:
-		return LumeTypeMeal
-	case lumepb.LumeType_LUME_TYPE_TRANSPORT:
-		return LumeTypeTransport
-	case lumepb.LumeType_LUME_TYPE_CUSTOM:
-		return LumeTypeCustom
+// StringArray handles PostgreSQL text arrays
+type StringArray []string
+
+func (a StringArray) Value() (driver.Value, error) {
+	return pq.Array(a).Value()
+}
+
+func (a *StringArray) Scan(value interface{}) error {
+	return pq.Array(a).Scan(value)
+}
+
+// DomainToProto converts domain Lume to protobuf Lume
+func DomainToProto(domainLume *Lume) *lumepb.Lume {
+	proto := &lumepb.Lume{
+		LumeId:       domainLume.LumeID,
+		LumoId:       domainLume.LumoID,
+		Type:         DomainLumeTypeToProto(domainLume.Type),
+		Name:         domainLume.Name,
+		Description:  domainLume.Description,
+		Images:       EnsureStringArray(domainLume.Images),
+		CategoryTags: EnsureStringArray(domainLume.CategoryTags),
+		CreatedAt:    timestamppb.New(domainLume.CreatedAt),
+		UpdatedAt:    timestamppb.New(domainLume.UpdatedAt),
+	}
+
+	// Handle optional timestamps
+	if domainLume.DateStart != nil {
+		proto.DateStart = timestamppb.New(*domainLume.DateStart)
+	}
+	if domainLume.DateEnd != nil {
+		proto.DateEnd = timestamppb.New(*domainLume.DateEnd)
+	}
+
+	// Handle optional coordinates
+	if domainLume.Latitude != nil {
+		proto.Latitude = *domainLume.Latitude
+	}
+	if domainLume.Longitude != nil {
+		proto.Longitude = *domainLume.Longitude
+	}
+
+	// Handle optional address
+	if domainLume.Address != nil {
+		proto.Address = *domainLume.Address
+	}
+
+	// Handle optional booking link
+	if domainLume.BookingLink != nil {
+		proto.BookingLink = *domainLume.BookingLink
+	}
+
+	return proto
+}
+
+// ProtoToDomain converts protobuf Lume to domain Lume
+func ProtoToDomain(protoLume *lumepb.Lume) *Lume {
+	domain := &Lume{
+		LumeID:       protoLume.LumeId,
+		LumoID:       protoLume.LumoId,
+		Type:         ProtoLumeTypeToDomain(protoLume.Type),
+		Name:         protoLume.Name,
+		Description:  protoLume.Description,
+		Images:       EnsureStringArray(protoLume.Images),
+		CategoryTags: EnsureStringArray(protoLume.CategoryTags),
+		CreatedAt:    protoLume.CreatedAt.AsTime(),
+		UpdatedAt:    protoLume.UpdatedAt.AsTime(),
+	}
+
+	// Handle optional timestamps
+	if protoLume.DateStart != nil {
+		dateStart := protoLume.DateStart.AsTime()
+		domain.DateStart = &dateStart
+	}
+	if protoLume.DateEnd != nil {
+		dateEnd := protoLume.DateEnd.AsTime()
+		domain.DateEnd = &dateEnd
+	}
+
+	// Handle optional coordinates
+	if protoLume.Latitude != 0 {
+		domain.Latitude = &protoLume.Latitude
+	}
+	if protoLume.Longitude != 0 {
+		domain.Longitude = &protoLume.Longitude
+	}
+
+	// Handle optional address
+	if protoLume.Address != "" {
+		domain.Address = &protoLume.Address
+	}
+
+	// Handle optional booking link
+	if protoLume.BookingLink != "" {
+		domain.BookingLink = &protoLume.BookingLink
+	}
+
+	return domain
+}
+
+// Proto LumeType conversion functions
+func StringToLumeType(s string) lumepb.LumeType {
+	switch s {
+	case "CITY":
+		return lumepb.LumeType_LUME_TYPE_CITY
+	case "ATTRACTION":
+		return lumepb.LumeType_LUME_TYPE_ATTRACTION
+	case "ACCOMMODATION":
+		return lumepb.LumeType_LUME_TYPE_ACCOMMODATION
+	case "RESTAURANT":
+		return lumepb.LumeType_LUME_TYPE_RESTAURANT
+	case "TRANSPORT_HUB":
+		return lumepb.LumeType_LUME_TYPE_TRANSPORT_HUB
+	case "ACTIVITY":
+		return lumepb.LumeType_LUME_TYPE_ACTIVITY
+	case "SHOPPING":
+		return lumepb.LumeType_LUME_TYPE_SHOPPING
+	case "ENTERTAINMENT":
+		return lumepb.LumeType_LUME_TYPE_ENTERTAINMENT
+	case "CUSTOM":
+		return lumepb.LumeType_LUME_TYPE_CUSTOM
 	default:
-		return LumeTypeUnspecified
+		return lumepb.LumeType_LUME_TYPE_UNSPECIFIED
 	}
 }
 
-// DomainToProtoLumeType converts the domain LumeType into the Protobuf enum.
-func DomainToProtoLumeType(domType LumeType) lumepb.LumeType {
-	switch domType {
-	case LumeTypeStop:
-		return lumepb.LumeType_LUME_TYPE_STOP
+func LumeTypeToString(lt lumepb.LumeType) string {
+	switch lt {
+	case lumepb.LumeType_LUME_TYPE_CITY:
+		return "CITY"
+	case lumepb.LumeType_LUME_TYPE_ATTRACTION:
+		return "ATTRACTION"
+	case lumepb.LumeType_LUME_TYPE_ACCOMMODATION:
+		return "ACCOMMODATION"
+	case lumepb.LumeType_LUME_TYPE_RESTAURANT:
+		return "RESTAURANT"
+	case lumepb.LumeType_LUME_TYPE_TRANSPORT_HUB:
+		return "TRANSPORT_HUB"
+	case lumepb.LumeType_LUME_TYPE_ACTIVITY:
+		return "ACTIVITY"
+	case lumepb.LumeType_LUME_TYPE_SHOPPING:
+		return "SHOPPING"
+	case lumepb.LumeType_LUME_TYPE_ENTERTAINMENT:
+		return "ENTERTAINMENT"
+	case lumepb.LumeType_LUME_TYPE_CUSTOM:
+		return "CUSTOM"
+	default:
+		return "LUME_TYPE_UNSPECIFIED"
+	}
+}
+
+// Domain LumeType to Proto LumeType conversion
+func DomainLumeTypeToProto(dt LumeType) lumepb.LumeType {
+	switch dt {
+	case LumeTypeCity:
+		return lumepb.LumeType_LUME_TYPE_CITY
+	case LumeTypeAttraction:
+		return lumepb.LumeType_LUME_TYPE_ATTRACTION
 	case LumeTypeAccommodation:
 		return lumepb.LumeType_LUME_TYPE_ACCOMMODATION
-	case LumeTypePointOfInterest:
-		return lumepb.LumeType_LUME_TYPE_POINT_OF_INTEREST
-	case LumeTypeMeal:
-		return lumepb.LumeType_LUME_TYPE_MEAL
-	case LumeTypeTransport:
-		return lumepb.LumeType_LUME_TYPE_TRANSPORT
+	case LumeTypeRestaurant:
+		return lumepb.LumeType_LUME_TYPE_RESTAURANT
+	case LumeTypeTransportHub:
+		return lumepb.LumeType_LUME_TYPE_TRANSPORT_HUB
+	case LumeTypeActivity:
+		return lumepb.LumeType_LUME_TYPE_ACTIVITY
+	case LumeTypeShopping:
+		return lumepb.LumeType_LUME_TYPE_SHOPPING
+	case LumeTypeEntertainment:
+		return lumepb.LumeType_LUME_TYPE_ENTERTAINMENT
 	case LumeTypeCustom:
 		return lumepb.LumeType_LUME_TYPE_CUSTOM
 	default:
@@ -47,62 +186,51 @@ func DomainToProtoLumeType(domType LumeType) lumepb.LumeType {
 	}
 }
 
-// structToMap converts a *structpb.Struct into a Go map[string]interface{}.
-func structToMap(s *structpb.Struct) map[string]interface{} {
-	if s == nil {
-		return nil
+// Proto LumeType to Domain LumeType conversion
+func ProtoLumeTypeToDomain(pt lumepb.LumeType) LumeType {
+	switch pt {
+	case lumepb.LumeType_LUME_TYPE_CITY:
+		return LumeTypeCity
+	case lumepb.LumeType_LUME_TYPE_ATTRACTION:
+		return LumeTypeAttraction
+	case lumepb.LumeType_LUME_TYPE_ACCOMMODATION:
+		return LumeTypeAccommodation
+	case lumepb.LumeType_LUME_TYPE_RESTAURANT:
+		return LumeTypeRestaurant
+	case lumepb.LumeType_LUME_TYPE_TRANSPORT_HUB:
+		return LumeTypeTransportHub
+	case lumepb.LumeType_LUME_TYPE_ACTIVITY:
+		return LumeTypeActivity
+	case lumepb.LumeType_LUME_TYPE_SHOPPING:
+		return LumeTypeShopping
+	case lumepb.LumeType_LUME_TYPE_ENTERTAINMENT:
+		return LumeTypeEntertainment
+	case lumepb.LumeType_LUME_TYPE_CUSTOM:
+		return LumeTypeCustom
+	default:
+		return LumeTypeUnspecified
 	}
-	return s.AsMap()
 }
 
-// mapToStruct converts a Go map[string]interface{} into a *structpb.Struct.
-// Returns nil if the input map is nil or empty.
-func mapToStruct(m map[string]interface{}) (*structpb.Struct, error) {
-	if len(m) == 0 {
-		return nil, nil
+// Validation helpers
+func ValidateCoordinates(lat, lng *float64) bool {
+	if lat == nil || lng == nil {
+		return true // Optional fields are valid when nil
 	}
-	return structpb.NewStruct(m)
+	return *lat >= -90 && *lat <= 90 && *lng >= -180 && *lng <= 180
 }
 
-// ProtoToDomainLume converts the Protobuf Lume message into the domain‐level models.Lume.
-func ProtoToDomainLume(pb *lumepb.Lume) (*Lume, error) {
-	if pb == nil {
-		return nil, nil
+func ValidateDateRange(start, end *time.Time) bool {
+	if start == nil || end == nil {
+		return true // Optional fields are valid when nil
 	}
-
-	dom := &Lume{
-		LumeId:      pb.GetLumeId(),
-		LumoID:      pb.GetLumoId(),
-		Label:       pb.GetLabel(),
-		Type:        ProtoToDomainLumeType(pb.GetType()),
-		Description: pb.GetDescription(),
-		Metadata:    structToMap(pb.GetMetadata()),
-		CreatedAt:   pb.GetCreatedAt().AsTime(),
-		UpdatedAt:   pb.GetUpdatedAt().AsTime(),
-	}
-	return dom, nil
+	return start.Before(*end) || start.Equal(*end)
 }
 
-// DomainToProtoLume converts a domain models.Lume into the Protobuf Lume message.
-func DomainToProtoLume(dom *Lume) (*lumepb.Lume, error) {
-	if dom == nil {
-		return nil, nil
+// Helper to ensure empty arrays instead of nil for consistency
+func EnsureStringArray(arr []string) []string {
+	if arr == nil {
+		return make([]string, 0)
 	}
-
-	pbMetadata, err := mapToStruct(dom.Metadata)
-	if err != nil {
-		return nil, err
-	}
-
-	pb := &lumepb.Lume{
-		LumeId:      dom.LumeId,
-		LumoId:      dom.LumoID,
-		Label:       dom.Label,
-		Type:        DomainToProtoLumeType(dom.Type),
-		Description: dom.Description,
-		Metadata:    pbMetadata,
-		CreatedAt:   timestamppb.New(dom.CreatedAt),
-		UpdatedAt:   timestamppb.New(dom.UpdatedAt),
-	}
-	return pb, nil
+	return arr
 }

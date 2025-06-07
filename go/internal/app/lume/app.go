@@ -4,10 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 	modellume "github.com/mcdev12/lumo/go/internal/models/lume"
-	lumerepo "github.com/mcdev12/lumo/go/internal/repository/lume"
 )
 
 // Domain errors
@@ -22,12 +22,16 @@ var (
 
 // LumeRepository defines what the app layer needs from the repository
 type LumeRepository interface {
-	CreateLume(ctx context.Context, req lumerepo.CreateLumeRequest) (*modellume.Lume, error)
+	CreateLume(ctx context.Context, domainLume *modellume.Lume) (*modellume.Lume, error)
 	GetLumeByID(ctx context.Context, id int64) (*modellume.Lume, error)
-	GetLumeByLumeID(ctx context.Context, lumeID uuid.UUID) (*modellume.Lume, error)
-	ListLumesByLumoID(ctx context.Context, lumoID uuid.UUID, limit, offset int32) ([]*modellume.Lume, error)
-	UpdateLume(ctx context.Context, id int64, req lumerepo.UpdateLumeRequest) (*modellume.Lume, error)
+	GetLumeByLumeID(ctx context.Context, lumeID string) (*modellume.Lume, error)
+	ListLumesByLumoID(ctx context.Context, lumoID string, limit, offset int32) ([]*modellume.Lume, error)
+	ListLumesByType(ctx context.Context, lumoID string, lumeType modellume.LumeType, limit, offset int32) ([]*modellume.Lume, error)
+	SearchLumesByLocation(ctx context.Context, lumoID string, minLat, maxLat, minLng, maxLng float64, limit, offset int32) ([]*modellume.Lume, error)
+	UpdateLume(ctx context.Context, domainLume *modellume.Lume) (*modellume.Lume, error)
 	DeleteLume(ctx context.Context, id int64) error
+	DeleteLumeByLumeID(ctx context.Context, lumeID string) error
+	CountLumesByLumo(ctx context.Context, lumoID string) (int64, error)
 }
 
 // CreateLumeRequest represents the business layer's create request
@@ -37,6 +41,15 @@ type CreateLumeRequest struct {
 	Type        modellume.LumeType
 	Description string
 	Metadata    map[string]interface{}
+	// Additional fields from the domain model
+	DateStart   *time.Time
+	DateEnd     *time.Time
+	Latitude    *float64
+	Longitude   *float64
+	Address     *string
+	Images      []string
+	CategoryTags []string
+	BookingLink *string
 }
 
 // UpdateLumeRequest represents the business layer's update request
@@ -45,6 +58,15 @@ type UpdateLumeRequest struct {
 	Type        modellume.LumeType
 	Description string
 	Metadata    map[string]interface{}
+	// Additional fields from the domain model
+	DateStart   *time.Time
+	DateEnd     *time.Time
+	Latitude    *float64
+	Longitude   *float64
+	Address     *string
+	Images      []string
+	CategoryTags []string
+	BookingLink *string
 }
 
 // ListLumesRequest represents pagination parameters
@@ -52,6 +74,25 @@ type ListLumesRequest struct {
 	LumoID string
 	Limit  int32
 	Offset int32
+}
+
+// ListLumesByTypeRequest represents type filtering with pagination
+type ListLumesByTypeRequest struct {
+	LumoID string
+	Type   modellume.LumeType
+	Limit  int32
+	Offset int32
+}
+
+// SearchLumesByLocationRequest represents location search parameters
+type SearchLumesByLocationRequest struct {
+	LumoID  string
+	MinLat  float64
+	MaxLat  float64
+	MinLng  float64
+	MaxLng  float64
+	Limit   int32
+	Offset  int32
 }
 
 // App handles business logic for Lumes
@@ -72,12 +113,12 @@ func (a *App) CreateLume(ctx context.Context, req CreateLumeRequest) (*modellume
 		return nil, err
 	}
 
-	repoReq, err := a.toRepositoryCreateRequest(req)
+	domainLume, err := a.toDomainModelForCreate(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert request: %w", err)
 	}
 
-	return a.repo.CreateLume(ctx, repoReq)
+	return a.repo.CreateLume(ctx, domainLume)
 }
 
 // GetLumeByID retrieves a Lume by its internal ID
@@ -87,18 +128,16 @@ func (a *App) GetLumeByID(ctx context.Context, id int64) (*modellume.Lume, error
 
 // GetLumeByLumeID retrieves a Lume by its UUID string
 func (a *App) GetLumeByLumeID(ctx context.Context, lumeID string) (*modellume.Lume, error) {
-	lumeUUID, err := uuid.Parse(lumeID)
-	if err != nil {
+	if _, err := uuid.Parse(lumeID); err != nil {
 		return nil, ErrInvalidLumeID
 	}
 
-	return a.repo.GetLumeByLumeID(ctx, lumeUUID)
+	return a.repo.GetLumeByLumeID(ctx, lumeID)
 }
 
 // ListLumesByLumoID retrieves all Lumes for a given Lumo
 func (a *App) ListLumesByLumoID(ctx context.Context, req ListLumesRequest) ([]*modellume.Lume, error) {
-	lumoUUID, err := uuid.Parse(req.LumoID)
-	if err != nil {
+	if _, err := uuid.Parse(req.LumoID); err != nil {
 		return nil, ErrInvalidLumoID
 	}
 
@@ -112,7 +151,49 @@ func (a *App) ListLumesByLumoID(ctx context.Context, req ListLumesRequest) ([]*m
 		offset = 0
 	}
 
-	return a.repo.ListLumesByLumoID(ctx, lumoUUID, limit, offset)
+	return a.repo.ListLumesByLumoID(ctx, req.LumoID, limit, offset)
+}
+
+// ListLumesByType retrieves all Lumes of a specific type for a Lumo
+func (a *App) ListLumesByType(ctx context.Context, req ListLumesByTypeRequest) ([]*modellume.Lume, error) {
+	if _, err := uuid.Parse(req.LumoID); err != nil {
+		return nil, ErrInvalidLumoID
+	}
+
+	if !a.isValidLumeType(req.Type) {
+		return nil, ErrInvalidLumeType
+	}
+
+	limit := req.Limit
+	if limit <= 0 || limit > 100 {
+		limit = 50
+	}
+
+	offset := req.Offset
+	if offset < 0 {
+		offset = 0
+	}
+
+	return a.repo.ListLumesByType(ctx, req.LumoID, req.Type, limit, offset)
+}
+
+// SearchLumesByLocation finds Lumes within a bounding box for a specific Lumo
+func (a *App) SearchLumesByLocation(ctx context.Context, req SearchLumesByLocationRequest) ([]*modellume.Lume, error) {
+	if _, err := uuid.Parse(req.LumoID); err != nil {
+		return nil, ErrInvalidLumoID
+	}
+
+	limit := req.Limit
+	if limit <= 0 || limit > 100 {
+		limit = 50
+	}
+
+	offset := req.Offset
+	if offset < 0 {
+		offset = 0
+	}
+
+	return a.repo.SearchLumesByLocation(ctx, req.LumoID, req.MinLat, req.MaxLat, req.MinLng, req.MaxLng, limit, offset)
 }
 
 // UpdateLume updates an existing Lume
@@ -121,23 +202,38 @@ func (a *App) UpdateLume(ctx context.Context, id int64, req UpdateLumeRequest) (
 		return nil, err
 	}
 
-	repoReq, err := a.toRepositoryUpdateRequest(req)
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert request: %w", err)
-	}
-
-	return a.repo.UpdateLume(ctx, id, repoReq)
-}
-
-// UpdateLumeByLumeID updates a Lume by its UUID
-func (a *App) UpdateLumeByLumeID(ctx context.Context, lumeID string, req UpdateLumeRequest) (*modellume.Lume, error) {
-	// First get the lume to find its internal ID
-	lume, err := a.GetLumeByLumeID(ctx, lumeID)
+	// First get the existing lume
+	existingLume, err := a.repo.GetLumeByID(ctx, id)
 	if err != nil {
 		return nil, err
 	}
 
-	return a.UpdateLume(ctx, lume.Id, req)
+	// Update the domain model with new values
+	updatedLume := a.updateDomainModel(existingLume, req)
+
+	return a.repo.UpdateLume(ctx, updatedLume)
+}
+
+// UpdateLumeByLumeID updates a Lume by its UUID
+func (a *App) UpdateLumeByLumeID(ctx context.Context, lumeID string, req UpdateLumeRequest) (*modellume.Lume, error) {
+	if _, err := uuid.Parse(lumeID); err != nil {
+		return nil, ErrInvalidLumeID
+	}
+
+	// First get the lume to find its internal ID
+	existingLume, err := a.repo.GetLumeByLumeID(ctx, lumeID)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := a.validateUpdateRequest(req); err != nil {
+		return nil, err
+	}
+
+	// Update the domain model with new values
+	updatedLume := a.updateDomainModel(existingLume, req)
+
+	return a.repo.UpdateLume(ctx, updatedLume)
 }
 
 // DeleteLume deletes a Lume by its ID
@@ -147,13 +243,20 @@ func (a *App) DeleteLume(ctx context.Context, id int64) error {
 
 // DeleteLumeByLumeID deletes a Lume by its UUID
 func (a *App) DeleteLumeByLumeID(ctx context.Context, lumeID string) error {
-	// First get the lume to find its internal ID
-	lume, err := a.GetLumeByLumeID(ctx, lumeID)
-	if err != nil {
-		return err
+	if _, err := uuid.Parse(lumeID); err != nil {
+		return ErrInvalidLumeID
 	}
+	
+	return a.repo.DeleteLumeByLumeID(ctx, lumeID)
+}
 
-	return a.DeleteLume(ctx, lume.Id)
+// CountLumesByLumo returns the total count of Lumes for a Lumo
+func (a *App) CountLumesByLumo(ctx context.Context, lumoID string) (int64, error) {
+	if _, err := uuid.Parse(lumoID); err != nil {
+		return 0, ErrInvalidLumoID
+	}
+	
+	return a.repo.CountLumesByLumo(ctx, lumoID)
 }
 
 // Validation methods
@@ -188,11 +291,14 @@ func (a *App) validateUpdateRequest(req UpdateLumeRequest) error {
 func (a *App) isValidLumeType(lumeType modellume.LumeType) bool {
 	switch lumeType {
 	case modellume.LumeTypeUnspecified,
-		modellume.LumeTypeStop,
+		modellume.LumeTypeCity,
+		modellume.LumeTypeAttraction,
 		modellume.LumeTypeAccommodation,
-		modellume.LumeTypePointOfInterest,
-		modellume.LumeTypeMeal,
-		modellume.LumeTypeTransport,
+		modellume.LumeTypeRestaurant,
+		modellume.LumeTypeTransportHub,
+		modellume.LumeTypeActivity,
+		modellume.LumeTypeShopping,
+		modellume.LumeTypeEntertainment,
 		modellume.LumeTypeCustom:
 		return true
 	default:
@@ -201,41 +307,59 @@ func (a *App) isValidLumeType(lumeType modellume.LumeType) bool {
 }
 
 // Conversion methods
-// toRepositoryCreateRequest generates UUID in Go
-func (a *App) toRepositoryCreateRequest(req CreateLumeRequest) (lumerepo.CreateLumeRequest, error) {
-	lumoUUID, err := uuid.Parse(req.LumoID)
-	if err != nil {
-		return lumerepo.CreateLumeRequest{}, ErrInvalidLumoID
+// toDomainModelForCreate creates a new domain model from the create request
+func (a *App) toDomainModelForCreate(req CreateLumeRequest) (*modellume.Lume, error) {
+	// Create a new domain model
+	lume := &modellume.Lume{
+		LumeID:       uuid.New().String(), // Generate new UUID
+		LumoID:       req.LumoID,
+		Type:         req.Type,
+		Name:         req.Label,
+		Description:  req.Description,
+		DateStart:    req.DateStart,
+		DateEnd:      req.DateEnd,
+		Latitude:     req.Latitude,
+		Longitude:    req.Longitude,
+		Address:      req.Address,
+		Images:       req.Images,
+		CategoryTags: req.CategoryTags,
+		BookingLink:  req.BookingLink,
+		CreatedAt:    time.Now(),
+		UpdatedAt:    time.Now(),
 	}
 
-	// Generate UUID in application layer
-	lumeUUID := uuid.New()
-
-	var description *string
-	if req.Description != "" {
-		description = &req.Description
+	// Ensure arrays are initialized
+	if lume.Images == nil {
+		lume.Images = make([]string, 0)
+	}
+	if lume.CategoryTags == nil {
+		lume.CategoryTags = make([]string, 0)
 	}
 
-	return lumerepo.CreateLumeRequest{
-		LumeID:      lumeUUID, // Generated by Go!
-		LumoID:      lumoUUID, // Parent Lumo UUID
-		Label:       req.Label,
-		Type:        req.Type,
-		Description: description,
-		Metadata:    req.Metadata,
-	}, nil
+	return lume, nil
 }
 
-func (a *App) toRepositoryUpdateRequest(req UpdateLumeRequest) (lumerepo.UpdateLumeRequest, error) {
-	var description *string
-	if req.Description != "" {
-		description = &req.Description
+// updateDomainModel updates an existing domain model with values from the update request
+func (a *App) updateDomainModel(existingLume *modellume.Lume, req UpdateLumeRequest) *modellume.Lume {
+	// Update fields
+	existingLume.Name = req.Label
+	existingLume.Type = req.Type
+	existingLume.Description = req.Description
+	existingLume.DateStart = req.DateStart
+	existingLume.DateEnd = req.DateEnd
+	existingLume.Latitude = req.Latitude
+	existingLume.Longitude = req.Longitude
+	existingLume.Address = req.Address
+	existingLume.BookingLink = req.BookingLink
+	existingLume.UpdatedAt = time.Now()
+
+	// Update arrays if provided
+	if req.Images != nil {
+		existingLume.Images = req.Images
+	}
+	if req.CategoryTags != nil {
+		existingLume.CategoryTags = req.CategoryTags
 	}
 
-	return lumerepo.UpdateLumeRequest{
-		Label:       req.Label,
-		Type:        req.Type,
-		Description: description,
-		Metadata:    req.Metadata,
-	}, nil
+	return existingLume
 }

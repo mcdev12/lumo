@@ -1,48 +1,112 @@
 package lume
 
-import "time"
+import (
+	"time"
 
-// LumeType is a domain‐level enum that mirrors (but does NOT import) the Protobuf LumeType.
+	"github.com/google/uuid"
+)
+
+// LumeType represents the type of travel node
 type LumeType string
 
 const (
-	LumeTypeUnspecified     LumeType = "LUME_TYPE_UNSPECIFIED"
-	LumeTypeStop            LumeType = "LUME_TYPE_STOP"
-	LumeTypeAccommodation   LumeType = "LUME_TYPE_ACCOMMODATION"
-	LumeTypePointOfInterest LumeType = "LUME_TYPE_POINT_OF_INTEREST"
-	LumeTypeMeal            LumeType = "LUME_TYPE_MEAL"
-	LumeTypeTransport       LumeType = "LUME_TYPE_TRANSPORT"
-	LumeTypeCustom          LumeType = "LUME_TYPE_CUSTOM"
+	LumeTypeUnspecified   LumeType = "LUME_TYPE_UNSPECIFIED"
+	LumeTypeCity          LumeType = "CITY"
+	LumeTypeAttraction    LumeType = "ATTRACTION"
+	LumeTypeAccommodation LumeType = "ACCOMMODATION"
+	LumeTypeRestaurant    LumeType = "RESTAURANT"
+	LumeTypeTransportHub  LumeType = "TRANSPORT_HUB"
+	LumeTypeActivity      LumeType = "ACTIVITY"
+	LumeTypeShopping      LumeType = "SHOPPING"
+	LumeTypeEntertainment LumeType = "ENTERTAINMENT"
+	LumeTypeCustom        LumeType = "CUSTOM"
 )
 
-// Lume is the internal Go struct representation of a "node" (Lume).
-// It lives in your domain and does not import any Protobuf/SQL/Transport packages.
+// Lume represents a single travel node/location in the domain
 type Lume struct {
-	// Id is the auto-incrementing database ID (internal use)
-	Id int64
+	// Internal database ID (not exposed in API)
+	ID int64 `json:"-"`
 
-	// LumeId is the UUID of this Lume (public identifier)
-	LumeId string
+	// Unique identifier (UUID)
+	LumeID string `json:"lume_id"`
 
-	// LumoID is the UUID of the parent Lumo graph.
-	LumoID string
+	// Lumo reference (parent container)
+	LumoID string `json:"lumo_id"`
 
-	// Label is a human‐readable name (e.g., "Eiffel Tower").
-	Label string
+	// Lume type (e.g. CITY, ATTRACTION, etc.)
+	Type LumeType `json:"type"`
 
-	// Type categorizes the Lume (Stop, Accommodation, etc.).
-	Type LumeType
+	// Display title (e.g. "Paris," "Eiffel Tower")
+	Name string `json:"name"`
 
-	// Description holds any free‐text notes or details.
-	Description string
+	// Optional start date/time for scheduling
+	DateStart *time.Time `json:"date_start,omitempty"`
 
-	// Metadata contains arbitrary key/value pairs (mirrors google.protobuf.Struct).
-	// We use map[string]interface{} in the domain.
-	Metadata map[string]interface{}
+	// Optional end date/time
+	DateEnd *time.Time `json:"date_end,omitempty"`
 
-	// CreatedAt is when this Lume was first created.
-	CreatedAt time.Time
+	// Optional GPS coordinates
+	Latitude  *float64 `json:"latitude,omitempty"`
+	Longitude *float64 `json:"longitude,omitempty"`
 
-	// UpdatedAt is when this Lume was last modified.
-	UpdatedAt time.Time
+	// Optional textual address
+	Address *string `json:"address,omitempty"`
+
+	// Freeform notes/description
+	Description string `json:"description"`
+
+	// URLs to uploaded photos
+	Images []string `json:"images"`
+
+	// Optional taxonomy tags
+	CategoryTags []string `json:"category_tags"`
+
+	// Optional external reservation URL
+	BookingLink *string `json:"booking_link,omitempty"`
+
+	// System timestamps
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+// NewLume creates a new Lume with generated UUID
+func NewLume(lumoID string, lumeType LumeType, name string) *Lume {
+	now := time.Now()
+	return &Lume{
+		LumeID:       uuid.New().String(),
+		LumoID:       lumoID,
+		Type:         lumeType,
+		Name:         name,
+		Images:       make([]string, 0),
+		CategoryTags: make([]string, 0),
+		CreatedAt:    now,
+		UpdatedAt:    now,
+	}
+}
+
+// IsValid performs basic validation on the Lume
+func (l *Lume) IsValid() bool {
+	if l.LumeID == "" {
+		return false
+	}
+	if l.LumoID == "" {
+		return false
+	}
+	if l.Name == "" {
+		return false
+	}
+	if l.Type == "" || l.Type == LumeTypeUnspecified {
+		return false
+	}
+	return true
+}
+
+// HasLocation returns true if the Lume has GPS coordinates
+func (l *Lume) HasLocation() bool {
+	return l.Latitude != nil && l.Longitude != nil
+}
+
+// HasSchedule returns true if the Lume has date/time scheduling
+func (l *Lume) HasSchedule() bool {
+	return l.DateStart != nil || l.DateEnd != nil
 }

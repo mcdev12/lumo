@@ -1,0 +1,27 @@
+# Top-level defaults
+dir: "./mocks"
+pkgname: "mocks"
+template: testify
+
+# Overwrite mocks on each run
+force-file-write: true
+
+# Use goimports to keep imports tidy
+formatter: goimports
+
+# Optional build tag when loading your code
+# build-tags: "unit"
+
+# Be more verbose if you need debugging info
+log-level: info
+
+packages:
+  "github.com/mcdev12/lumo/go/internal/repository/db/sqlc":
+    interfaces:
+      Querier:
+        # Override just for this interface
+        config:
+          # Custom file name instead of the default mocks_test.go
+          filename: "querier_mock.go"
+          # (Optional) change the generated struct name
+          structname: "MockQuerier"
