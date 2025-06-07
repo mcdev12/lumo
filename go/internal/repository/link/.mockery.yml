@@ -16,12 +16,12 @@ formatter: goimports
 log-level: info
 
 packages:
-  "github.com/mcdev12/lumo/go/internal/repository/lume":
+  "github.com/mcdev12/lumo/go/internal/repository/link":
     interfaces:
-      LumeQuerier:
+      LinkQuerier:
         # Override just for this interface
         config:
           # Custom file name instead of the default mocks_test.go
           filename: "querier_mock.go"
           # (Optional) change the generated struct name
-          structname: "MockLumeQuerier"
+          structname: "MockLinkQuerier"

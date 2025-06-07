@@ -11,10 +11,22 @@ import (
 )
 
 //go:generate mockery
+type LumeQuerier interface {
+	CountLumesByLumo(ctx context.Context, lumoID uuid.UUID) (int64, error)
+	CreateLume(ctx context.Context, arg sqlc.CreateLumeParams) (sqlc.Lume, error)
+	DeleteLume(ctx context.Context, id int64) error
+	DeleteLumeByLumeID(ctx context.Context, lumeID uuid.UUID) error
+	GetLumeByID(ctx context.Context, id int64) (sqlc.Lume, error)
+	GetLumeByLumeID(ctx context.Context, lumeID uuid.UUID) (sqlc.Lume, error)
+	ListLumesByLumoID(ctx context.Context, arg sqlc.ListLumesByLumoIDParams) ([]sqlc.Lume, error)
+	ListLumesByType(ctx context.Context, arg sqlc.ListLumesByTypeParams) ([]sqlc.Lume, error)
+	SearchLumesByLocation(ctx context.Context, arg sqlc.SearchLumesByLocationParams) ([]sqlc.Lume, error)
+	UpdateLume(ctx context.Context, arg sqlc.UpdateLumeParams) (sqlc.Lume, error)
+}
 
 // Repository is the concrete implementation for Lume data access
 type Repository struct {
-	queries sqlc.Querier
+	queries LumeQuerier
 }
 
 // NewRepository creates a new Repository instance

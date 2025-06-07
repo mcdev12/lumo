@@ -18,13 +18,13 @@ import (
 // RepositoryTestSuite is a test suite for the Repository
 type RepositoryTestSuite struct {
 	suite.Suite
-	mockQuerier *mocks.MockQuerier
+	mockQuerier *mocks.MockLumeQuerier
 	repository  *Repository
 }
 
 // SetupTest is called before each test
 func (s *RepositoryTestSuite) SetupTest() {
-	s.mockQuerier = mocks.NewMockQuerier(s.T())
+	s.mockQuerier = mocks.NewMockLumeQuerier(s.T())
 	s.repository = &Repository{
 		queries: s.mockQuerier,
 	}

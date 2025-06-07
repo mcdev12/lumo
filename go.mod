@@ -7,6 +7,7 @@ require (
 	connectrpc.com/grpcreflect v1.3.0
 	github.com/google/uuid v1.6.0
 	github.com/lib/pq v1.10.9
+	github.com/sqlc-dev/pqtype v0.3.0
 	github.com/stretchr/testify v1.10.0
 	golang.org/x/net v0.38.0
 	google.golang.org/protobuf v1.36.6

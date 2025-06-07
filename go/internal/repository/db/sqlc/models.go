@@ -9,7 +9,21 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/sqlc-dev/pqtype"
 )
+
+type Link struct {
+	ID            int64                 `json:"id"`
+	LinkID        uuid.UUID             `json:"link_id"`
+	FromLumeID    uuid.UUID             `json:"from_lume_id"`
+	ToLumeID      uuid.UUID             `json:"to_lume_id"`
+	LinkType      string                `json:"link_type"`
+	TravelDetails pqtype.NullRawMessage `json:"travel_details"`
+	Notes         sql.NullString        `json:"notes"`
+	SequenceIndex sql.NullInt32         `json:"sequence_index"`
+	CreatedAt     time.Time             `json:"created_at"`
+	UpdatedAt     time.Time             `json:"updated_at"`
+}
 
 type Lume struct {
 	ID           int64           `json:"id"`
