@@ -3,6 +3,8 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
+	"strconv"
 
 	"connectrpc.com/connect"
 	"connectrpc.com/grpcreflect"
@@ -17,15 +19,38 @@ import (
 	lumeService "github.com/mcdev12/lumo/go/internal/service/lume"
 )
 
+// getEnv returns the value of an environment variable or a default value if not set
+func getEnv(key, defaultValue string) string {
+	value, exists := os.LookupEnv(key)
+	if !exists {
+		return defaultValue
+	}
+	return value
+}
+
+// getEnvAsInt returns the value of an environment variable as an integer or a default value if not set
+func getEnvAsInt(key string, defaultValue int) int {
+	valueStr := getEnv(key, "")
+	if valueStr == "" {
+		return defaultValue
+	}
+	value, err := strconv.Atoi(valueStr)
+	if err != nil {
+		log.Printf("Warning: Environment variable %s is not a valid integer, using default value %d", key, defaultValue)
+		return defaultValue
+	}
+	return value
+}
+
 func main() {
 	// Initialize database
 	config := &db.Config{
-		Host:     "localhost",
-		Port:     5432,
-		User:     "postgres",
-		Password: "postgres",
-		DBName:   "lumo_db",
-		SSLMode:  "disable",
+		Host:     getEnv("DB_HOST", "localhost"),
+		Port:     getEnvAsInt("DB_PORT", 5432),
+		User:     getEnv("DB_USER", "postgres"),
+		Password: getEnv("DB_PASSWORD", "postgres"),
+		DBName:   getEnv("DB_NAME", "lumo_db"),
+		SSLMode:  getEnv("DB_SSLMODE", "disable"),
 	}
 
 	dbConn, err := db.NewConnection(config)
