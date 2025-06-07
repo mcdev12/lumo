@@ -1,0 +1,60 @@
+syntax = "proto3";
+
+package lumo;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/mcdev12/lumo/go/internal/genproto/protobuf/link;link";
+
+
+message Link {
+  // External UUID for API clients
+  string link_id = 1;
+
+  // Which two Lumés this edge connects
+  string from_lume_id = 2;
+  string to_lume_id = 3;
+
+  // The high‐level type of relation
+  LinkType type = 4;
+
+  // TODO Make oneof proto with more details for different link types ? Only populated when type == TRAVEL
+  TravelDetails travel = 5;
+
+  // Freeform notes about this relationship
+  string notes = 6;
+
+  // Optional hint for rendering order in lists/timelines
+  int32  sequence_index = 7;
+
+  // Audit timestamps
+  google.protobuf.Timestamp created_at = 8;
+  google.protobuf.Timestamp updated_at = 9;
+}
+
+// Describes the semantic relationship between two Lumés
+enum LinkType {
+  LINK_TYPE_UNSPECIFIED = 0;
+  LINK_TYPE_TRAVEL = 1; // movement from A → B
+  LINK_TYPE_RECOMMENDED = 2; // “often visited together for ml recommendation purposes”
+  LINK_TYPE_CUSTOM = 99; // user-defined
+}
+
+// Sub-type used when LinkType == TRAVEL (or WALK)
+enum TravelMode {
+  TRAVEL_MODE_UNSPECIFIED = 0;
+  TRAVEL_MODE_FLIGHT = 1;
+  TRAVEL_MODE_TRAIN = 2;
+  TRAVEL_MODE_BUS = 3;
+  TRAVEL_MODE_DRIVE = 4;
+  TRAVEL_MODE_UBER = 5;
+  TRAVEL_MODE_METRO = 6;
+}
+
+// All the movement‐specific metadata
+message TravelDetails {
+  TravelMode mode = 1;  // e.g. DRIVE, FLIGHT, WALK…
+  int32      duration_sec = 2;  // estimate in seconds
+  double     cost_estimate = 3;  // estimate in user’s currency
+  double     distance_meters = 4;  // in meters
+}

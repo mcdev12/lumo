@@ -44,7 +44,7 @@ func createTestLumeDomain() *lume.Lume {
 	lng := -74.0060
 	address := "New York, NY"
 	bookingLink := "https://example.com/booking"
-	
+
 	return &lume.Lume{
 		ID:           1,
 		LumeID:       lumeID,
@@ -68,7 +68,7 @@ func createTestLumeSqlc() sqlc.Lume {
 	lumoID := uuid.New()
 	lumeID := uuid.New()
 	now := time.Now()
-	
+
 	return sqlc.Lume{
 		ID:           1,
 		LumeID:       lumeID,
@@ -93,13 +93,13 @@ func (s *RepositoryTestSuite) TestCreateLume() {
 	ctx := context.Background()
 	domainLume := createTestLumeDomain()
 	sqlcLume := createTestLumeSqlc()
-	
+
 	// Set up expectations
 	s.mockQuerier.On("CreateLume", mock.Anything, mock.AnythingOfType("sqlc.CreateLumeParams")).Return(sqlcLume, nil)
-	
+
 	// Act
 	result, err := s.repository.CreateLume(ctx, domainLume)
-	
+
 	// Assert
 	s.NoError(err)
 	s.NotNil(result)
@@ -114,13 +114,13 @@ func (s *RepositoryTestSuite) TestCreateLumeError() {
 	ctx := context.Background()
 	domainLume := createTestLumeDomain()
 	expectedErr := errors.New("database error")
-	
+
 	// Set up expectations
 	s.mockQuerier.On("CreateLume", mock.Anything, mock.AnythingOfType("sqlc.CreateLumeParams")).Return(sqlc.Lume{}, expectedErr)
-	
+
 	// Act
 	result, err := s.repository.CreateLume(ctx, domainLume)
-	
+
 	// Assert
 	s.Error(err)
 	s.Nil(result)
@@ -134,13 +134,13 @@ func (s *RepositoryTestSuite) TestGetLumeByID() {
 	ctx := context.Background()
 	id := int64(1)
 	sqlcLume := createTestLumeSqlc()
-	
+
 	// Set up expectations
 	s.mockQuerier.On("GetLumeByID", mock.Anything, id).Return(sqlcLume, nil)
-	
+
 	// Act
 	result, err := s.repository.GetLumeByID(ctx, id)
-	
+
 	// Assert
 	s.NoError(err)
 	s.NotNil(result)
@@ -155,13 +155,13 @@ func (s *RepositoryTestSuite) TestGetLumeByIDError() {
 	ctx := context.Background()
 	id := int64(1)
 	expectedErr := errors.New("database error")
-	
+
 	// Set up expectations
 	s.mockQuerier.On("GetLumeByID", mock.Anything, id).Return(sqlc.Lume{}, expectedErr)
-	
+
 	// Act
 	result, err := s.repository.GetLumeByID(ctx, id)
-	
+
 	// Assert
 	s.Error(err)
 	s.Nil(result)
@@ -177,13 +177,13 @@ func (s *RepositoryTestSuite) TestGetLumeByLumeID() {
 	lumeIDStr := lumeID.String()
 	sqlcLume := createTestLumeSqlc()
 	sqlcLume.LumeID = lumeID
-	
+
 	// Set up expectations
 	s.mockQuerier.On("GetLumeByLumeID", mock.Anything, lumeID).Return(sqlcLume, nil)
-	
+
 	// Act
 	result, err := s.repository.GetLumeByLumeID(ctx, lumeIDStr)
-	
+
 	// Assert
 	s.NoError(err)
 	s.NotNil(result)
@@ -196,10 +196,10 @@ func (s *RepositoryTestSuite) TestGetLumeByLumeIDInvalidUUID() {
 	// Arrange
 	ctx := context.Background()
 	lumeIDStr := "invalid-uuid"
-	
+
 	// Act
 	result, err := s.repository.GetLumeByLumeID(ctx, lumeIDStr)
-	
+
 	// Assert
 	s.Error(err)
 	s.Nil(result)
@@ -213,13 +213,13 @@ func (s *RepositoryTestSuite) TestGetLumeByLumeIDDatabaseError() {
 	lumeID := uuid.New()
 	lumeIDStr := lumeID.String()
 	expectedErr := errors.New("database error")
-	
+
 	// Set up expectations
 	s.mockQuerier.On("GetLumeByLumeID", mock.Anything, lumeID).Return(sqlc.Lume{}, expectedErr)
-	
+
 	// Act
 	result, err := s.repository.GetLumeByLumeID(ctx, lumeIDStr)
-	
+
 	// Assert
 	s.Error(err)
 	s.Nil(result)
@@ -239,15 +239,15 @@ func (s *RepositoryTestSuite) TestListLumesByLumoID() {
 	sqlcLume2 := createTestLumeSqlc()
 	sqlcLume2.ID = 2
 	sqlcLumes := []sqlc.Lume{sqlcLume1, sqlcLume2}
-	
+
 	// Set up expectations
 	s.mockQuerier.On("ListLumesByLumoID", mock.Anything, mock.MatchedBy(func(params sqlc.ListLumesByLumoIDParams) bool {
 		return params.LumoID == lumoID && params.Limit == limit && params.Offset == offset
 	})).Return(sqlcLumes, nil)
-	
+
 	// Act
 	results, err := s.repository.ListLumesByLumoID(ctx, lumoIDStr, limit, offset)
-	
+
 	// Assert
 	s.NoError(err)
 	s.NotNil(results)
@@ -264,10 +264,10 @@ func (s *RepositoryTestSuite) TestListLumesByLumoIDInvalidUUID() {
 	lumoIDStr := "invalid-uuid"
 	limit := int32(10)
 	offset := int32(0)
-	
+
 	// Act
 	results, err := s.repository.ListLumesByLumoID(ctx, lumoIDStr, limit, offset)
-	
+
 	// Assert
 	s.Error(err)
 	s.Nil(results)
@@ -283,15 +283,15 @@ func (s *RepositoryTestSuite) TestListLumesByLumoIDDatabaseError() {
 	limit := int32(10)
 	offset := int32(0)
 	expectedErr := errors.New("database error")
-	
+
 	// Set up expectations
 	s.mockQuerier.On("ListLumesByLumoID", mock.Anything, mock.MatchedBy(func(params sqlc.ListLumesByLumoIDParams) bool {
 		return params.LumoID == lumoID && params.Limit == limit && params.Offset == offset
 	})).Return(nil, expectedErr)
-	
+
 	// Act
 	results, err := s.repository.ListLumesByLumoID(ctx, lumoIDStr, limit, offset)
-	
+
 	// Assert
 	s.Error(err)
 	s.Nil(results)
@@ -312,15 +312,15 @@ func (s *RepositoryTestSuite) TestListLumesByType() {
 	sqlcLume2 := createTestLumeSqlc()
 	sqlcLume2.ID = 2
 	sqlcLumes := []sqlc.Lume{sqlcLume1, sqlcLume2}
-	
+
 	// Set up expectations
 	s.mockQuerier.On("ListLumesByType", mock.Anything, mock.MatchedBy(func(params sqlc.ListLumesByTypeParams) bool {
 		return params.LumoID == lumoID && params.Type == string(lumeType) && params.Limit == limit && params.Offset == offset
 	})).Return(sqlcLumes, nil)
-	
+
 	// Act
 	results, err := s.repository.ListLumesByType(ctx, lumoIDStr, lumeType, limit, offset)
-	
+
 	// Assert
 	s.NoError(err)
 	s.NotNil(results)
@@ -346,21 +346,21 @@ func (s *RepositoryTestSuite) TestSearchLumesByLocation() {
 	sqlcLume2 := createTestLumeSqlc()
 	sqlcLume2.ID = 2
 	sqlcLumes := []sqlc.Lume{sqlcLume1, sqlcLume2}
-	
+
 	// Set up expectations
 	s.mockQuerier.On("SearchLumesByLocation", mock.Anything, mock.MatchedBy(func(params sqlc.SearchLumesByLocationParams) bool {
-		return params.LumoID == lumoID && 
-			   params.Latitude.Float64 == minLat && 
-			   params.Latitude_2.Float64 == maxLat && 
-			   params.Longitude.Float64 == minLng && 
-			   params.Longitude_2.Float64 == maxLng && 
-			   params.Limit == limit && 
-			   params.Offset == offset
+		return params.LumoID == lumoID &&
+			params.Latitude.Float64 == minLat &&
+			params.Latitude_2.Float64 == maxLat &&
+			params.Longitude.Float64 == minLng &&
+			params.Longitude_2.Float64 == maxLng &&
+			params.Limit == limit &&
+			params.Offset == offset
 	})).Return(sqlcLumes, nil)
-	
+
 	// Act
 	results, err := s.repository.SearchLumesByLocation(ctx, lumoIDStr, minLat, maxLat, minLng, maxLng, limit, offset)
-	
+
 	// Assert
 	s.NoError(err)
 	s.NotNil(results)
@@ -376,13 +376,13 @@ func (s *RepositoryTestSuite) TestUpdateLume() {
 	ctx := context.Background()
 	domainLume := createTestLumeDomain()
 	sqlcLume := createTestLumeSqlc()
-	
+
 	// Set up expectations
 	s.mockQuerier.On("UpdateLume", mock.Anything, mock.AnythingOfType("sqlc.UpdateLumeParams")).Return(sqlcLume, nil)
-	
+
 	// Act
 	result, err := s.repository.UpdateLume(ctx, domainLume)
-	
+
 	// Assert
 	s.NoError(err)
 	s.NotNil(result)
@@ -396,13 +396,13 @@ func (s *RepositoryTestSuite) TestDeleteLume() {
 	// Arrange
 	ctx := context.Background()
 	id := int64(1)
-	
+
 	// Set up expectations
 	s.mockQuerier.On("DeleteLume", mock.Anything, id).Return(nil)
-	
+
 	// Act
 	err := s.repository.DeleteLume(ctx, id)
-	
+
 	// Assert
 	s.NoError(err)
 	s.mockQuerier.AssertExpectations(s.T())
@@ -414,13 +414,13 @@ func (s *RepositoryTestSuite) TestDeleteLumeByLumeID() {
 	ctx := context.Background()
 	lumeID := uuid.New()
 	lumeIDStr := lumeID.String()
-	
+
 	// Set up expectations
 	s.mockQuerier.On("DeleteLumeByLumeID", mock.Anything, lumeID).Return(nil)
-	
+
 	// Act
 	err := s.repository.DeleteLumeByLumeID(ctx, lumeIDStr)
-	
+
 	// Assert
 	s.NoError(err)
 	s.mockQuerier.AssertExpectations(s.T())
@@ -433,13 +433,13 @@ func (s *RepositoryTestSuite) TestCountLumesByLumo() {
 	lumoID := uuid.New()
 	lumoIDStr := lumoID.String()
 	expectedCount := int64(10)
-	
+
 	// Set up expectations
 	s.mockQuerier.On("CountLumesByLumo", mock.Anything, lumoID).Return(expectedCount, nil)
-	
+
 	// Act
 	count, err := s.repository.CountLumesByLumo(ctx, lumoIDStr)
-	
+
 	// Assert
 	s.NoError(err)
 	s.Equal(expectedCount, count)

@@ -1,0 +1,58 @@
+syntax = "proto3";
+
+package lumo;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+import "protobuf/link/link.proto";
+
+option go_package = "github.com/mcdev12/lumo/go/internal/genproto/protobuf/link;link";
+
+service LinkService {
+  // Create a new Link edge
+  rpc CreateLink(CreateLinkRequest) returns (Link);
+
+  // Fetch a Link by its UUID
+  rpc GetLink(GetLinkRequest) returns (Link);
+
+  // Update an existing Link (must include link_id)
+  rpc UpdateLink(UpdateLinkRequest) returns (Link);
+
+  // Delete a Link by UUID
+  rpc DeleteLink(DeleteLinkRequest) returns (google.protobuf.Empty);
+
+  // List links, optionally filtered and paginated
+  rpc ListLinks(ListLinksRequest) returns (ListLinksResponse);
+}
+
+message CreateLinkRequest {
+  Link link = 1;
+}
+
+message GetLinkRequest {
+  string link_id = 1;
+}
+
+message UpdateLinkRequest {
+  Link link = 1;
+}
+
+message DeleteLinkRequest {
+  string link_id = 1;
+}
+
+message ListLinksRequest {
+  // Filter by parent trip (Lumo)
+  string lumo_uuid = 1;
+  // Optional: filter by source or dest Lume
+  string from_lume_id = 2;
+  string to_lume_id = 3;
+  // Pagination
+  int32  page_size = 4;
+  string page_token = 5;
+}
+
+message ListLinksResponse {
+  repeated Link links = 1;
+  string next_page_token = 2;
+}
