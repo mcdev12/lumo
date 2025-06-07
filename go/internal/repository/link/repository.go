@@ -32,7 +32,7 @@ type LinkQuerier interface {
 
 // Repository is the concrete implementation for Link data access
 type Repository struct {
-	queries sqlc.Querier
+	queries LinkQuerier
 }
 
 // NewRepository creates a new Repository instance
