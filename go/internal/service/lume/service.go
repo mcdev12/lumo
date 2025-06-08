@@ -1,12 +1,10 @@
 package lume
 
 import (
+	"connectrpc.com/connect"
 	"context"
 	"errors"
 	"strconv"
-	"time"
-
-	"connectrpc.com/connect"
 
 	applume "github.com/mcdev12/lumo/go/internal/app/lume"
 	pb "github.com/mcdev12/lumo/go/internal/genproto/lume/v1"
@@ -61,13 +59,8 @@ func (s *Service) CreateLume(ctx context.Context, req *connect.Request[pb.Create
 		return nil, mapErrorToConnectError(err)
 	}
 
-	pbRespLume, err := toPbLume(domainLume)
-	if err != nil {
-		return nil, connect.NewError(connect.CodeInternal, err)
-	}
-
 	return connect.NewResponse(&pb.CreateLumeResponse{
-		Lume: pbRespLume,
+		Lume: domainToProto(domainLume),
 	}), nil
 }
 
@@ -75,10 +68,9 @@ func (s *Service) CreateLume(ctx context.Context, req *connect.Request[pb.Create
 func (s *Service) GetLume(ctx context.Context, req *connect.Request[pb.GetLumeRequest]) (*connect.Response[pb.GetLumeResponse], error) {
 	requestID := req.Msg.GetLumeId()
 
-	// Try to parse as int64 first (internal ID), then as UUID (lume_id)
 	var domainLume *modellume.Lume
 	var err error
-
+	// Try to parse as int64 first (internal ID), then as UUID (lume_id)
 	if id, parseErr := strconv.ParseInt(requestID, 10, 64); parseErr == nil {
 		// It's an internal ID
 		domainLume, err = s.app.GetLumeByID(ctx, id)
@@ -91,17 +83,13 @@ func (s *Service) GetLume(ctx context.Context, req *connect.Request[pb.GetLumeRe
 		return nil, mapErrorToConnectError(err)
 	}
 
-	pbLume, err := toPbLume(domainLume)
-	if err != nil {
-		return nil, connect.NewError(connect.CodeInternal, err)
-	}
-
 	return connect.NewResponse(&pb.GetLumeResponse{
-		Lume: pbLume,
+		Lume: domainToProto(domainLume),
 	}), nil
 }
 
 // ListLumes retrieves all Lumes for a given Lumo
+// TODO probably wrong need to fix
 func (s *Service) ListLumes(ctx context.Context, req *connect.Request[pb.ListLumesRequest]) (*connect.Response[pb.ListLumesResponse], error) {
 	// Convert page_size to limit and page_token to offset
 	limit := req.Msg.GetPageSize()
@@ -148,11 +136,8 @@ func (s *Service) ListLumes(ctx context.Context, req *connect.Request[pb.ListLum
 
 	pbLumes := make([]*pb.Lume, len(domainLumes))
 	for i, domainLume := range domainLumes {
-		pbLume, err := toPbLume(domainLume)
-		if err != nil {
-			return nil, connect.NewError(connect.CodeInternal, err)
-		}
-		pbLumes[i] = pbLume
+		pbLumes[i] = domainToProto(domainLume)
+
 	}
 
 	// Calculate next page token
@@ -185,13 +170,8 @@ func (s *Service) UpdateLume(ctx context.Context, req *connect.Request[pb.Update
 		return nil, mapErrorToConnectError(err)
 	}
 
-	pbRespLume, err := toPbLume(domainLume)
-	if err != nil {
-		return nil, connect.NewError(connect.CodeInternal, err)
-	}
-
 	return connect.NewResponse(&pb.UpdateLumeResponse{
-		Lume: pbRespLume,
+		Lume: domainToProto(domainLume),
 	}), nil
 }
 
@@ -215,105 +195,4 @@ func (s *Service) DeleteLume(ctx context.Context, req *connect.Request[pb.Delete
 	}
 
 	return connect.NewResponse(&pb.DeleteLumeResponse{}), nil
-}
-
-// Helper methods for conversion and error mapping
-
-// toAppCreateRequest converts a protobuf Lume to an app CreateLumeRequest
-func (s *Service) toAppCreateRequest(pbLume *pb.CreateLumeRequest) (applume.CreateLumeRequest, error) {
-	// Convert timestamps to time.Time pointers
-	var dateStart, dateEnd *time.Time
-	if pbLume.GetDateStart() != nil {
-		t := pbLume.GetDateStart().AsTime()
-		dateStart = &t
-	}
-	if pbLume.GetDateEnd() != nil {
-		t := pbLume.GetDateEnd().AsTime()
-		dateEnd = &t
-	}
-
-	// Convert optional fields
-	var latitude, longitude *float64
-	var address, bookingLink *string
-
-	if pbLume.GetLatitude() != 0 {
-		lat := pbLume.GetLatitude()
-		latitude = &lat
-	}
-	if pbLume.GetLongitude() != 0 {
-		lng := pbLume.GetLongitude()
-		longitude = &lng
-	}
-	if pbLume.GetAddress() != "" {
-		addr := pbLume.GetAddress()
-		address = &addr
-	}
-	if pbLume.GetBookingLink() != "" {
-		link := pbLume.GetBookingLink()
-		bookingLink = &link
-	}
-
-	return applume.CreateLumeRequest{
-		LumoID:       pbLume.GetLumoId(),
-		Label:        pbLume.GetName(),
-		Type:         modellume.LumeType(pbLume.GetType().String()),
-		Description:  pbLume.GetDescription(),
-		DateStart:    dateStart,
-		DateEnd:      dateEnd,
-		Latitude:     latitude,
-		Longitude:    longitude,
-		Address:      address,
-		Images:       pbLume.GetImages(),
-		CategoryTags: pbLume.GetCategoryTags(),
-		BookingLink:  bookingLink,
-	}, nil
-}
-
-// toAppUpdateRequest converts a protobuf Lume to an app UpdateLumeRequest
-func (s *Service) toAppUpdateRequest(pbLume *pb.Lume) (applume.UpdateLumeRequest, error) {
-	// Convert timestamps to time.Time pointers
-	var dateStart, dateEnd *time.Time
-	if pbLume.GetDateStart() != nil {
-		t := pbLume.GetDateStart().AsTime()
-		dateStart = &t
-	}
-	if pbLume.GetDateEnd() != nil {
-		t := pbLume.GetDateEnd().AsTime()
-		dateEnd = &t
-	}
-
-	// Convert optional fields
-	var latitude, longitude *float64
-	var address, bookingLink *string
-
-	if pbLume.GetLatitude() != 0 {
-		lat := pbLume.GetLatitude()
-		latitude = &lat
-	}
-	if pbLume.GetLongitude() != 0 {
-		lng := pbLume.GetLongitude()
-		longitude = &lng
-	}
-	if pbLume.GetAddress() != "" {
-		addr := pbLume.GetAddress()
-		address = &addr
-	}
-	if pbLume.GetBookingLink() != "" {
-		link := pbLume.GetBookingLink()
-		bookingLink = &link
-	}
-
-	return applume.UpdateLumeRequest{
-		Label:        pbLume.GetName(),
-		Type:         modellume.LumeType(pbLume.GetType().String()),
-		Description:  pbLume.GetDescription(),
-		DateStart:    dateStart,
-		DateEnd:      dateEnd,
-		Latitude:     latitude,
-		Longitude:    longitude,
-		Address:      address,
-		Images:       pbLume.GetImages(),
-		CategoryTags: pbLume.GetCategoryTags(),
-		BookingLink:  bookingLink,
-	}, nil
 }
