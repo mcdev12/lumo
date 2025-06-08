@@ -10,5 +10,6 @@ plugins:
     out: go/internal/genproto
     opt:
       - paths=source_relative
+  - include_imports: true
 inputs:
   - directory: protobuf

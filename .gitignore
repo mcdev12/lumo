@@ -34,3 +34,4 @@ go.work.sum
 .DS_STORE
 
 /go/internal/genproto
+third_party/

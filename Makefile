@@ -164,6 +164,13 @@ grpcui-proto:
 	@echo "Starting grpcui with proto files..."
 	grpcui -plaintext -proto api/proto/lume/service.proto localhost:8080
 
+.PHONY: proto-deps
+proto-deps:
+	rm -rf third_party
+	buf export buf.build/bufbuild/protovalidate:v0.12.0 --output third_party
+	@echo "Protocol Buffer dependencies exported to third_party/"
+
+
 # Help command
 .PHONY: help
 
