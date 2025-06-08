@@ -8,6 +8,7 @@ import (
 
 	"connectrpc.com/connect"
 	"connectrpc.com/grpcreflect"
+	"connectrpc.com/validate"
 
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
@@ -83,24 +84,23 @@ func main() {
 	linkApplication := linkApp.NewLinkApp(linkRepository)
 	linkSvc := linkService.NewService(linkApplication)
 
+	interceptor, err := validate.NewInterceptor()
+	if err != nil {
+		log.Fatalf("Failed to create proto validation interceptor: %v", err)
+	}
+
 	// Create Connect adapters
 	lumeServicePath, lumeConnectSvc := lumeconnect.NewLumeServiceHandler(
 		lumeSvc,
-		connect.WithInterceptors(
-			// Add your interceptors here
-		),
+		connect.WithInterceptors(interceptor),
 	)
 	lumoServicePath, lumoConnectSvc := lumoconnect.NewLumoServiceHandler(
 		lumoSvc,
-		connect.WithInterceptors(
-			// Add your interceptors here
-		),
+		connect.WithInterceptors(interceptor),
 	)
 	linkServicePath, linkConnectSvc := linkconnect.NewLinkServiceHandler(
 		linkSvc,
-		connect.WithInterceptors(
-			// Add your interceptors here
-		),
+		connect.WithInterceptors(interceptor),
 	)
 
 	// CORS middleware

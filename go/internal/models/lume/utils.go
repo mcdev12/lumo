@@ -1,6 +1,7 @@
 package lume
 
 import (
+	"fmt"
 	"time"
 
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -105,6 +106,35 @@ func ProtoToDomain(protoLume *lumepb.Lume) *Lume {
 	}
 
 	return domain
+}
+
+// PbToDomainType maps the protobuf LumeType into your domain LumeType,
+// returning an error if it’s not one of the supported cases.
+func PbToDomainType(pbType lumepb.LumeType) (LumeType, error) {
+	switch pbType {
+	case lumepb.LumeType_LUME_TYPE_UNSPECIFIED:
+		return LumeTypeUnspecified, nil
+	case lumepb.LumeType_LUME_TYPE_CITY:
+		return LumeTypeCity, nil
+	case lumepb.LumeType_LUME_TYPE_ATTRACTION:
+		return LumeTypeAttraction, nil
+	case lumepb.LumeType_LUME_TYPE_ACCOMMODATION:
+		return LumeTypeAccommodation, nil
+	case lumepb.LumeType_LUME_TYPE_RESTAURANT:
+		return LumeTypeRestaurant, nil
+	case lumepb.LumeType_LUME_TYPE_TRANSPORT_HUB:
+		return LumeTypeTransportHub, nil
+	case lumepb.LumeType_LUME_TYPE_ACTIVITY:
+		return LumeTypeActivity, nil
+	case lumepb.LumeType_LUME_TYPE_SHOPPING:
+		return LumeTypeShopping, nil
+	case lumepb.LumeType_LUME_TYPE_ENTERTAINMENT:
+		return LumeTypeEntertainment, nil
+	case lumepb.LumeType_LUME_TYPE_CUSTOM:
+		return LumeTypeCustom, nil
+	default:
+		return "", fmt.Errorf("invalid LumeType: %v", pbType)
+	}
 }
 
 // Proto LumeType conversion functions

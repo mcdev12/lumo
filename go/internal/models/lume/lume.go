@@ -11,15 +11,15 @@ type LumeType string
 
 const (
 	LumeTypeUnspecified   LumeType = "LUME_TYPE_UNSPECIFIED"
-	LumeTypeCity          LumeType = "CITY"
-	LumeTypeAttraction    LumeType = "ATTRACTION"
-	LumeTypeAccommodation LumeType = "ACCOMMODATION"
-	LumeTypeRestaurant    LumeType = "RESTAURANT"
-	LumeTypeTransportHub  LumeType = "TRANSPORT_HUB"
-	LumeTypeActivity      LumeType = "ACTIVITY"
-	LumeTypeShopping      LumeType = "SHOPPING"
-	LumeTypeEntertainment LumeType = "ENTERTAINMENT"
-	LumeTypeCustom        LumeType = "CUSTOM"
+	LumeTypeCity          LumeType = "LUME_TYPE_CITY"
+	LumeTypeAttraction    LumeType = "LUME_TYPE_ATTRACTION"
+	LumeTypeAccommodation LumeType = "LUME_TYPE_ACCOMMODATION"
+	LumeTypeRestaurant    LumeType = "LUME_TYPE_RESTAURANT"
+	LumeTypeTransportHub  LumeType = "LUME_TYPE_TRANSPORT_HUB"
+	LumeTypeActivity      LumeType = "LUME_TYPE_ACTIVITY"
+	LumeTypeShopping      LumeType = "LUME_TYPE_SHOPPING"
+	LumeTypeEntertainment LumeType = "LUME_TYPE_ENTERTAINMENT"
+	LumeTypeCustom        LumeType = "LUME_TYPE_CUSTOM"
 )
 
 // Lume represents a single travel node/location in the domain
@@ -83,23 +83,6 @@ func NewLume(lumoID string, lumeType LumeType, name string) *Lume {
 		UpdatedAt:    now,
 	}
 }
-
-// IsValid performs basic validation on the Lume
-//func (l *Lume) IsValid() bool {
-//	if l.LumeID == "" {
-//		return false
-//	}
-//	if l.LumoID == "" {
-//		return false
-//	}
-//	if l.Name == "" {
-//		return false
-//	}
-//	if l.Type == "" || l.Type == LumeTypeUnspecified {
-//		return false
-//	}
-//	return true
-//}
 
 // HasLocation returns true if the Lume has GPS coordinates
 func (l *Lume) HasLocation() bool {

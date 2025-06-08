@@ -3,6 +3,8 @@ syntax = "proto3";
 
 package lume.v1;
 
+import "buf/validate/validate.proto";
+import "google/protobuf/timestamp.proto";
 import "lume/v1/lume.proto";
 
 option go_package = "github.com/mcdev12/lumo/go/internal/genproto/lume/v1;lumev1";
@@ -18,7 +20,45 @@ service LumeService {
 
 // Request to create a new Lume
 message CreateLumeRequest {
-  Lume lume = 1;
+  string lumo_id = 1 [
+    (buf.validate.field).string.uuid = true
+  ];
+
+  LumeType type = 2 [
+    (buf.validate.field).enum = {not_in: [0]},
+    (buf.validate.field).enum.defined_only = true
+  ];
+
+  string name = 3 [
+    (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE,
+    (buf.validate.field).string.min_len = 1
+  ];
+
+  google.protobuf.Timestamp date_start = 4;
+  google.protobuf.Timestamp date_end = 5;
+
+  double latitude = 6 [
+    (buf.validate.field).double.gte = -90,
+    (buf.validate.field).double.lte = 90
+  ];
+
+  double longitude = 7 [
+    (buf.validate.field).double.gte = -180,
+    (buf.validate.field).double.lte = 180
+  ]
+  ;
+  string address = 8;
+
+  string description = 9;
+
+  repeated string images = 10;
+
+  repeated string category_tags = 11;
+
+  string booking_link = 12 [
+    (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE,
+    (buf.validate.field).string.uri = true
+  ];
 }
 
 // Response after creating a Lume

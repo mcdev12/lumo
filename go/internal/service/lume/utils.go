@@ -2,6 +2,7 @@ package lume
 
 import (
 	"errors"
+	"log"
 
 	"connectrpc.com/connect"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -13,11 +14,6 @@ import (
 
 // toPbLume converts a domain Lume to a protobuf Lume
 func toPbLume(domainLume *modellume.Lume) (*pb.Lume, error) {
-	pbLumeType, err := toPbLumeType(domainLume.Type)
-	if err != nil {
-		return nil, err
-	}
-
 	// Convert timestamps
 	var dateStart, dateEnd *timestamppb.Timestamp
 	if domainLume.DateStart != nil {
@@ -47,7 +43,7 @@ func toPbLume(domainLume *modellume.Lume) (*pb.Lume, error) {
 	return &pb.Lume{
 		LumeId:       domainLume.LumeID,
 		LumoId:       domainLume.LumoID,
-		Type:         pbLumeType,
+		Type:         toPbLumeType(domainLume.Type),
 		Name:         domainLume.Name,
 		DateStart:    dateStart,
 		DateEnd:      dateEnd,
@@ -64,30 +60,31 @@ func toPbLume(domainLume *modellume.Lume) (*pb.Lume, error) {
 }
 
 // toPbLumeType converts a domain LumeType to a protobuf LumeType
-func toPbLumeType(domainType modellume.LumeType) (pb.LumeType, error) {
+func toPbLumeType(domainType modellume.LumeType) pb.LumeType {
 	switch domainType {
 	case modellume.LumeTypeUnspecified:
-		return pb.LumeType_LUME_TYPE_UNSPECIFIED, nil
+		return pb.LumeType_LUME_TYPE_UNSPECIFIED
 	case modellume.LumeTypeCity:
-		return pb.LumeType_LUME_TYPE_CITY, nil
+		return pb.LumeType_LUME_TYPE_CITY
 	case modellume.LumeTypeAttraction:
-		return pb.LumeType_LUME_TYPE_ATTRACTION, nil
+		return pb.LumeType_LUME_TYPE_ATTRACTION
 	case modellume.LumeTypeAccommodation:
-		return pb.LumeType_LUME_TYPE_ACCOMMODATION, nil
+		return pb.LumeType_LUME_TYPE_ACCOMMODATION
 	case modellume.LumeTypeRestaurant:
-		return pb.LumeType_LUME_TYPE_RESTAURANT, nil
+		return pb.LumeType_LUME_TYPE_RESTAURANT
 	case modellume.LumeTypeTransportHub:
-		return pb.LumeType_LUME_TYPE_TRANSPORT_HUB, nil
+		return pb.LumeType_LUME_TYPE_TRANSPORT_HUB
 	case modellume.LumeTypeActivity:
-		return pb.LumeType_LUME_TYPE_ACTIVITY, nil
+		return pb.LumeType_LUME_TYPE_ACTIVITY
 	case modellume.LumeTypeShopping:
-		return pb.LumeType_LUME_TYPE_SHOPPING, nil
+		return pb.LumeType_LUME_TYPE_SHOPPING
 	case modellume.LumeTypeEntertainment:
-		return pb.LumeType_LUME_TYPE_ENTERTAINMENT, nil
+		return pb.LumeType_LUME_TYPE_ENTERTAINMENT
 	case modellume.LumeTypeCustom:
-		return pb.LumeType_LUME_TYPE_CUSTOM, nil
+		return pb.LumeType_LUME_TYPE_CUSTOM
 	default:
-		return pb.LumeType_LUME_TYPE_UNSPECIFIED, errors.New("unknown lume type")
+		log.Printf("warning: toPbLumeType saw unexpected domain type %v, defaulting to UNSPECIFIED", domainType)
+		return pb.LumeType_LUME_TYPE_UNSPECIFIED
 	}
 }
 

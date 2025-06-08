@@ -46,12 +46,12 @@ func NewService(app LumeApp) *Service {
 
 // CreateLume creates a new Lume
 func (s *Service) CreateLume(ctx context.Context, req *connect.Request[pb.CreateLumeRequest]) (*connect.Response[pb.CreateLumeResponse], error) {
-	pbLume := req.Msg.GetLume()
-	if pbLume == nil {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("lume is required"))
+	pbRequest := req.Msg
+	if pbRequest == nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("request is empty"))
 	}
 
-	appReq, err := s.toAppCreateRequest(pbLume)
+	appReq, err := s.toAppCreateRequest(pbRequest)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, err)
 	}
@@ -220,7 +220,7 @@ func (s *Service) DeleteLume(ctx context.Context, req *connect.Request[pb.Delete
 // Helper methods for conversion and error mapping
 
 // toAppCreateRequest converts a protobuf Lume to an app CreateLumeRequest
-func (s *Service) toAppCreateRequest(pbLume *pb.Lume) (applume.CreateLumeRequest, error) {
+func (s *Service) toAppCreateRequest(pbLume *pb.CreateLumeRequest) (applume.CreateLumeRequest, error) {
 	// Convert timestamps to time.Time pointers
 	var dateStart, dateEnd *time.Time
 	if pbLume.GetDateStart() != nil {
