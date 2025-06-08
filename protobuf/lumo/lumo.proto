@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package lumo;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/mcdev12/lumo/go/internal/genproto/lumo;lumo";
+
+
+message Lumo {
+  string lumo_id = 1;
+
+  string user_id = 2;
+
+  string title = 3;
+
+  // Audit timestamps
+  google.protobuf.Timestamp created_at = 8;
+  google.protobuf.Timestamp updated_at = 9;
+}

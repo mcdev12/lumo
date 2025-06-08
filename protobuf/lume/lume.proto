@@ -5,7 +5,7 @@ package lumo;
 
 import "google/protobuf/timestamp.proto";
 
-option go_package = "github.com/mcdev12/lumo/go/internal/genproto/protobuf/lume;lume";
+option go_package = "github.com/mcdev12/lumo/go/internal/genproto/lume;lume";
 
 // Represents a single travel node ("Lume")
 message Lume {

@@ -1,7 +1,7 @@
-version: v1
-name: github.com/mcdev12/lumo
-deps:
-  - buf.build/googleapis/googleapis
+version: v2
+modules:
+  - path: protobuf
+    name: buf.build/mcdev12/lumo
 breaking:
   use:
     - FILE

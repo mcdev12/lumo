@@ -4,9 +4,9 @@ syntax = "proto3";
 package lumo;
 
 import "google/protobuf/timestamp.proto";
-import "protobuf/lume/lume.proto";
+import "lume/lume.proto";
 
-option go_package = "github.com/mcdev12/lumo/go/internal/genproto/protobuf/lume;lume";
+option go_package = "github.com/mcdev12/lumo/go/internal/genproto/lume;lume";
 
 // Service for managing Lume entities (nodes)
 service LumeService {

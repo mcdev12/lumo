@@ -4,19 +4,19 @@ package lumo;
 
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/empty.proto";
-import "protobuf/link/link.proto";
+import "link/link.proto";
 
-option go_package = "github.com/mcdev12/lumo/go/internal/genproto/protobuf/link;link";
+option go_package = "github.com/mcdev12/lumo/go/internal/genproto/link;link";
 
 service LinkService {
   // Create a new Link edge
   rpc CreateLink(CreateLinkRequest) returns (Link);
 
   // Fetch a Link by its UUID
-  rpc GetLink(GetLinkRequest) returns (Link);
+  rpc GetLink(GetLinkRequest) returns (GetLinkResponse);
 
   // Update an existing Link (must include link_id)
-  rpc UpdateLink(UpdateLinkRequest) returns (Link);
+  rpc UpdateLink(UpdateLinkRequest) returns (UpdateLinkResponse);
 
   // Delete a Link by UUID
   rpc DeleteLink(DeleteLinkRequest) returns (google.protobuf.Empty);
@@ -29,11 +29,23 @@ message CreateLinkRequest {
   Link link = 1;
 }
 
+message CreateLinkResponse {
+  Link link = 1;
+}
+
 message GetLinkRequest {
   string link_id = 1;
 }
 
+message GetLinkResponse {
+  Link link = 1;
+}
+
 message UpdateLinkRequest {
+  Link link = 1;
+}
+
+message UpdateLinkResponse {
   Link link = 1;
 }
 

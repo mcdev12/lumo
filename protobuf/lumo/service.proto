@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package lumo;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+import "lumo/lumo.proto";
+
+option go_package = "github.com/mcdev12/lumo/go/internal/genproto/lumo;lumo";
+
+
+service LumoService {
+  rpc CreateLumo(CreateLumoRequest) returns (CreateLumoResponse);
+  rpc GetLumo(GetLumoRequest) returns (GetLumoResponse);
+}
+
+
+
+message CreateLumoRequest {
+  Lumo lumo = 1;
+}
+
+message CreateLumoResponse {
+  Lumo lumo = 1;
+}
+
+message GetLumoRequest {
+  string lumo_id = 1;
+}
+
+message GetLumoResponse {
+  Lumo lumo = 1;
+}
