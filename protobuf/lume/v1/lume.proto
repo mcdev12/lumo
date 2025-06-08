@@ -1,11 +1,11 @@
 // File: lume.proto
 syntax = "proto3";
 
-package lume;
+package lume.v1;
 
 import "google/protobuf/timestamp.proto";
 
-option go_package = "github.com/mcdev12/lumo/go/internal/genproto/lume;lume";
+option go_package = "github.com/mcdev12/lumo/go/internal/genproto/lume/v1;lumev1";
 
 // Represents a single travel node ("Lume")
 message Lume {

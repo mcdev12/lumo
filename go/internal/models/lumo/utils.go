@@ -5,7 +5,7 @@ import (
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	lumopb "github.com/mcdev12/lumo/go/internal/genproto/lumo"
+	lumopb "github.com/mcdev12/lumo/go/internal/genproto/lumo/v1"
 )
 
 // DomainToProto converts domain Lumo to protobuf Lumo

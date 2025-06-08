@@ -85,10 +85,6 @@ func NewLinkApp(repo LinkRepository) *App {
 
 // CreateLink creates a new Link with business logic validation
 func (a *App) CreateLink(ctx context.Context, req CreateLinkRequest) (*modellink.Link, error) {
-	if err := a.validateCreateRequest(req); err != nil {
-		return nil, err
-	}
-
 	domainLink := a.toDomainModelForCreate(req)
 	return a.repo.CreateLink(ctx, domainLink)
 }
@@ -165,10 +161,6 @@ func (a *App) ListLinksByEitherLumeID(ctx context.Context, lumeID string, req Li
 
 // UpdateLink updates an existing Link
 func (a *App) UpdateLink(ctx context.Context, id int64, req UpdateLinkRequest) (*modellink.Link, error) {
-	if err := a.validateUpdateRequest(req); err != nil {
-		return nil, err
-	}
-
 	existingLink, err := a.repo.GetLinkByID(ctx, id)
 	if err != nil {
 		return nil, err
@@ -182,10 +174,6 @@ func (a *App) UpdateLink(ctx context.Context, id int64, req UpdateLinkRequest) (
 func (a *App) UpdateLinkByLinkID(ctx context.Context, linkID string, req UpdateLinkRequest) (*modellink.Link, error) {
 	if _, err := uuid.Parse(linkID); err != nil {
 		return nil, ErrInvalidLinkID
-	}
-
-	if err := a.validateUpdateRequest(req); err != nil {
-		return nil, err
 	}
 
 	existingLink, err := a.repo.GetLinkByLinkID(ctx, linkID)
@@ -218,72 +206,72 @@ func (a *App) CountLinksByLumeID(ctx context.Context, lumeID string) (int64, err
 	return a.repo.CountLinksByLumeID(ctx, lumeID)
 }
 
-// validateCreateRequest validates the create request
-func (a *App) validateCreateRequest(req CreateLinkRequest) error {
-	if _, err := uuid.Parse(req.FromLumeID); err != nil {
-		return ErrInvalidLumeID
-	}
-	if _, err := uuid.Parse(req.ToLumeID); err != nil {
-		return ErrInvalidLumeID
-	}
-	if !a.isValidLinkType(req.Type) {
-		return ErrInvalidLinkType
-	}
-	if req.Type == modellink.LinkTypeTravel && req.TravelDetails == nil {
-		return errors.New("travel details required for travel link type")
-	}
-	if req.TravelDetails != nil && !a.isValidTravelMode(req.TravelDetails.Mode) {
-		return ErrInvalidTravelMode
-	}
-	return nil
-}
-
-// validateUpdateRequest validates the update request
-func (a *App) validateUpdateRequest(req UpdateLinkRequest) error {
-	if _, err := uuid.Parse(req.FromLumeID); err != nil {
-		return ErrInvalidLumeID
-	}
-	if _, err := uuid.Parse(req.ToLumeID); err != nil {
-		return ErrInvalidLumeID
-	}
-	if !a.isValidLinkType(req.Type) {
-		return ErrInvalidLinkType
-	}
-	if req.Type == modellink.LinkTypeTravel && req.TravelDetails == nil {
-		return errors.New("travel details required for travel link type")
-	}
-	if req.TravelDetails != nil && !a.isValidTravelMode(req.TravelDetails.Mode) {
-		return ErrInvalidTravelMode
-	}
-	return nil
-}
+//// validateCreateRequest validates the create request
+//func (a *App) validateCreateRequest(req CreateLinkRequest) error {
+//	if _, err := uuid.Parse(req.FromLumeID); err != nil {
+//		return ErrInvalidLumeID
+//	}
+//	if _, err := uuid.Parse(req.ToLumeID); err != nil {
+//		return ErrInvalidLumeID
+//	}
+//	if !a.isValidLinkType(req.Type) {
+//		return ErrInvalidLinkType
+//	}
+//	if req.Type == modellink.LinkTypeTravel && req.TravelDetails == nil {
+//		return errors.New("travel details required for travel link type")
+//	}
+//	if req.TravelDetails != nil && !a.isValidTravelMode(req.TravelDetails.Mode) {
+//		return ErrInvalidTravelMode
+//	}
+//	return nil
+//}
+//
+//// validateUpdateRequest validates the update request
+//func (a *App) validateUpdateRequest(req UpdateLinkRequest) error {
+//	if _, err := uuid.Parse(req.FromLumeID); err != nil {
+//		return ErrInvalidLumeID
+//	}
+//	if _, err := uuid.Parse(req.ToLumeID); err != nil {
+//		return ErrInvalidLumeID
+//	}
+//	if !a.isValidLinkType(req.Type) {
+//		return ErrInvalidLinkType
+//	}
+//	if req.Type == modellink.LinkTypeTravel && req.TravelDetails == nil {
+//		return errors.New("travel details required for travel link type")
+//	}
+//	if req.TravelDetails != nil && !a.isValidTravelMode(req.TravelDetails.Mode) {
+//		return ErrInvalidTravelMode
+//	}
+//	return nil
+//}
 
 // isValidLinkType checks if the link type is valid
-func (a *App) isValidLinkType(linkType modellink.LinkType) bool {
-	switch linkType {
-	case modellink.LinkTypeTravel,
-		modellink.LinkTypeRecommended,
-		modellink.LinkTypeCustom:
-		return true
-	default:
-		return false
-	}
-}
-
-// isValidTravelMode checks if the travel mode is valid
-func (a *App) isValidTravelMode(travelMode modellink.TravelMode) bool {
-	switch travelMode {
-	case modellink.TravelModeFlight,
-		modellink.TravelModeTrain,
-		modellink.TravelModeBus,
-		modellink.TravelModeDrive,
-		modellink.TravelModeUber,
-		modellink.TravelModeMetro:
-		return true
-	default:
-		return false
-	}
-}
+//func (a *App) isValidLinkType(linkType modellink.LinkType) bool {
+//	switch linkType {
+//	case modellink.LinkTypeTravel,
+//		modellink.LinkTypeRecommended,
+//		modellink.LinkTypeCustom:
+//		return true
+//	default:
+//		return false
+//	}
+//}
+//
+//// isValidTravelMode checks if the travel mode is valid
+//func (a *App) isValidTravelMode(travelMode modellink.TravelMode) bool {
+//	switch travelMode {
+//	case modellink.TravelModeFlight,
+//		modellink.TravelModeTrain,
+//		modellink.TravelModeBus,
+//		modellink.TravelModeDrive,
+//		modellink.TravelModeUber,
+//		modellink.TravelModeMetro:
+//		return true
+//	default:
+//		return false
+//	}
+//}
 
 // toDomainModelForCreate converts a create request to a domain model
 func (a *App) toDomainModelForCreate(req CreateLinkRequest) *modellink.Link {

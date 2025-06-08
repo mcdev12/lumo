@@ -1,10 +1,10 @@
 syntax = "proto3";
 
-package lumo;
+package lumo.v1;
 
 import "google/protobuf/timestamp.proto";
 
-option go_package = "github.com/mcdev12/lumo/go/internal/genproto/lumo;lumo";
+option go_package = "github.com/mcdev12/lumo/go/internal/genproto/lumo/v1;lumov1";
 
 
 message Lumo {

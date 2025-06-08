@@ -1,14 +1,11 @@
 // File: service.proto
 syntax = "proto3";
 
-package lume;
+package lume.v1;
 
-import "google/protobuf/timestamp.proto";
-import "lume/lume.proto";
-import "buf/validate/validate.proto";
+import "lume/v1/lume.proto";
 
-
-option go_package = "github.com/mcdev12/lumo/go/internal/genproto/lume;lume";
+option go_package = "github.com/mcdev12/lumo/go/internal/genproto/lume/v1;lumev1";
 
 // Service for managing Lume entities (nodes)
 service LumeService {

@@ -8,9 +8,8 @@ import (
 	"connectrpc.com/connect"
 
 	applink "github.com/mcdev12/lumo/go/internal/app/link"
-	pb "github.com/mcdev12/lumo/go/internal/genproto/link"
+	pb "github.com/mcdev12/lumo/go/internal/genproto/link/v1"
 	modellink "github.com/mcdev12/lumo/go/internal/models/link"
-	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 // Domain errors
@@ -124,7 +123,7 @@ func (s *Service) UpdateLink(ctx context.Context, req *connect.Request[pb.Update
 }
 
 // DeleteLink deletes a Link by ID
-func (s *Service) DeleteLink(ctx context.Context, req *connect.Request[pb.DeleteLinkRequest]) (*connect.Response[emptypb.Empty], error) {
+func (s *Service) DeleteLink(ctx context.Context, req *connect.Request[pb.DeleteLinkRequest]) (*connect.Response[pb.DeleteLinkResponse], error) {
 	linkID := req.Msg.GetLinkId()
 	if linkID == "" {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("link_id is required"))
@@ -145,7 +144,7 @@ func (s *Service) DeleteLink(ctx context.Context, req *connect.Request[pb.Delete
 		return nil, s.mapErrorToConnectError(err)
 	}
 
-	return connect.NewResponse(&emptypb.Empty{}), nil
+	return connect.NewResponse(&pb.DeleteLinkResponse{}), nil
 }
 
 // ListLinks retrieves links with optional filtering and pagination

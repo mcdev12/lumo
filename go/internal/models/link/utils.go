@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	linkpb "github.com/mcdev12/lumo/go/internal/genproto/link"
+	linkpb "github.com/mcdev12/lumo/go/internal/genproto/link/v1"
 )
 
 // DomainToProto converts domain Link to protobuf Link

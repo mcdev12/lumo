@@ -1,10 +1,10 @@
 syntax = "proto3";
 
-package link;
+package link.v1;
 
 import "google/protobuf/timestamp.proto";
 
-option go_package = "github.com/mcdev12/lumo/go/internal/genproto/link;link";
+option go_package = "github.com/mcdev12/lumo/go/internal/genproto/link/v1;linkv1";
 
 message Link {
   // External UUID for API clients

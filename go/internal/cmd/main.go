@@ -15,9 +15,9 @@ import (
 	linkApp "github.com/mcdev12/lumo/go/internal/app/link"
 	lumeApp "github.com/mcdev12/lumo/go/internal/app/lume"
 	lumoApp "github.com/mcdev12/lumo/go/internal/app/lumo"
-	"github.com/mcdev12/lumo/go/internal/genproto/link/linkconnect"
-	"github.com/mcdev12/lumo/go/internal/genproto/lume/lumeconnect"
-	"github.com/mcdev12/lumo/go/internal/genproto/lumo/lumoconnect"
+	linkconnect "github.com/mcdev12/lumo/go/internal/genproto/link/v1/linkv1connect"
+	lumeconnect "github.com/mcdev12/lumo/go/internal/genproto/lume/v1/lumev1connect"
+	lumoconnect "github.com/mcdev12/lumo/go/internal/genproto/lumo/v1/lumov1connect"
 	"github.com/mcdev12/lumo/go/internal/repository/db"
 	linkRepo "github.com/mcdev12/lumo/go/internal/repository/link"
 	lumeRepo "github.com/mcdev12/lumo/go/internal/repository/lume"
@@ -87,19 +87,19 @@ func main() {
 	lumeServicePath, lumeConnectSvc := lumeconnect.NewLumeServiceHandler(
 		lumeSvc,
 		connect.WithInterceptors(
-		// Add your interceptors here
+			// Add your interceptors here
 		),
 	)
 	lumoServicePath, lumoConnectSvc := lumoconnect.NewLumoServiceHandler(
 		lumoSvc,
 		connect.WithInterceptors(
-		// Add your interceptors here
+			// Add your interceptors here
 		),
 	)
 	linkServicePath, linkConnectSvc := linkconnect.NewLinkServiceHandler(
 		linkSvc,
 		connect.WithInterceptors(
-		// Add your interceptors here
+			// Add your interceptors here
 		),
 	)
 

@@ -5,7 +5,7 @@ import (
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	lumepb "github.com/mcdev12/lumo/go/internal/genproto/lume"
+	lumepb "github.com/mcdev12/lumo/go/internal/genproto/lume/v1"
 )
 
 // StringArray handles PostgreSQL text arrays

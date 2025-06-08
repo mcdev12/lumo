@@ -6,10 +6,9 @@ import (
 	"strconv"
 
 	"connectrpc.com/connect"
-	"google.golang.org/protobuf/types/known/emptypb"
 
 	applumo "github.com/mcdev12/lumo/go/internal/app/lumo"
-	pb "github.com/mcdev12/lumo/go/internal/genproto/lumo"
+	pb "github.com/mcdev12/lumo/go/internal/genproto/lumo/v1"
 	modellumo "github.com/mcdev12/lumo/go/internal/models/lumo"
 )
 
@@ -164,7 +163,7 @@ func (s *Service) UpdateLumo(ctx context.Context, req *connect.Request[pb.Update
 }
 
 // DeleteLumo deletes a Lumo by ID
-func (s *Service) DeleteLumo(ctx context.Context, req *connect.Request[pb.DeleteLumoRequest]) (*connect.Response[emptypb.Empty], error) {
+func (s *Service) DeleteLumo(ctx context.Context, req *connect.Request[pb.DeleteLumoRequest]) (*connect.Response[pb.DeleteLumoResponse], error) {
 	requestID := req.Msg.GetUuid()
 
 	// Try to parse as int64 first (internal ID), then as UUID (lumo_id)
@@ -182,7 +181,7 @@ func (s *Service) DeleteLumo(ctx context.Context, req *connect.Request[pb.Delete
 		return nil, s.mapErrorToConnectError(err)
 	}
 
-	return connect.NewResponse(&emptypb.Empty{}), nil
+	return connect.NewResponse(&pb.DeleteLumoResponse{}), nil
 }
 
 // mapErrorToConnectError maps domain errors to Connect errors

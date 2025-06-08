@@ -1,12 +1,11 @@
 syntax = "proto3";
 
-package link;
+package link.v1;
 
-import "google/protobuf/timestamp.proto";
 import "google/protobuf/empty.proto";
-import "link/link.proto";
+import "link/v1/link.proto";
 
-option go_package = "github.com/mcdev12/lumo/go/internal/genproto/link;link";
+option go_package = "github.com/mcdev12/lumo/go/internal/genproto/link/v1;linkv1";
 
 service LinkService {
   // Create a new Link edge
@@ -19,7 +18,7 @@ service LinkService {
   rpc UpdateLink(UpdateLinkRequest) returns (UpdateLinkResponse);
 
   // Delete a Link by UUID
-  rpc DeleteLink(DeleteLinkRequest) returns (google.protobuf.Empty);
+  rpc DeleteLink(DeleteLinkRequest) returns (DeleteLinkResponse);
 
   // List links, optionally filtered and paginated
   rpc ListLinks(ListLinksRequest) returns (ListLinksResponse);
@@ -51,6 +50,10 @@ message UpdateLinkResponse {
 
 message DeleteLinkRequest {
   string link_id = 1;
+}
+
+message DeleteLinkResponse {
+  google.protobuf.Empty resp = 1;
 }
 
 message ListLinksRequest {

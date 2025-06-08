@@ -2,18 +2,17 @@ syntax = "proto3";
 
 package lumo.v1;
 
-import "google/protobuf/timestamp.proto";
 import "google/protobuf/empty.proto";
-import "lumo/lumo.proto";
+import "lumo/v1/lumo.proto";
 
-option go_package = "github.com/mcdev12/lumo/go/internal/genproto/lumo;lumo";
+option go_package = "github.com/mcdev12/lumo/go/internal/genproto/lumo/v1;lumov1";
 
 
 service LumoService {
   rpc CreateLumo(CreateLumoRequest)  returns (CreateLumoResponse);
   rpc GetLumo(GetLumoRequest)        returns (GetLumoResponse);
   rpc UpdateLumo(UpdateLumoRequest)  returns (UpdateLumoResponse);
-  rpc DeleteLumo(DeleteLumoRequest)  returns (google.protobuf.Empty);
+  rpc DeleteLumo(DeleteLumoRequest)  returns (DeleteLumoResponse);
   rpc ListLumos(ListLumosRequest)    returns (ListLumosResponse);
 }
 
@@ -45,6 +44,9 @@ message DeleteLumoRequest {
   string uuid = 1;
 }
 
+message DeleteLumoResponse {
+  google.protobuf.Empty resp = 1;
+}
 message ListLumosRequest {
   string user_id = 1;
   int32  page_size = 2;
