@@ -15,16 +15,22 @@ type Querier interface {
 	CountLinksByLumeID(ctx context.Context, fromLumeID uuid.UUID) (int64, error)
 	CountLinksByToLumeID(ctx context.Context, toLumeID uuid.UUID) (int64, error)
 	CountLumesByLumo(ctx context.Context, lumoID uuid.UUID) (int64, error)
+	CountLumosByUserID(ctx context.Context, userID uuid.UUID) (int64, error)
 	CreateLink(ctx context.Context, arg CreateLinkParams) (Link, error)
 	CreateLume(ctx context.Context, arg CreateLumeParams) (Lume, error)
+	CreateLumo(ctx context.Context, arg CreateLumoParams) (Lumo, error)
 	DeleteLink(ctx context.Context, id int64) error
 	DeleteLinkByLinkID(ctx context.Context, linkID uuid.UUID) error
 	DeleteLume(ctx context.Context, id int64) error
 	DeleteLumeByLumeID(ctx context.Context, lumeID uuid.UUID) error
+	DeleteLumo(ctx context.Context, id int64) error
+	DeleteLumoByLumoID(ctx context.Context, lumoID uuid.UUID) error
 	GetLinkByID(ctx context.Context, id int64) (Link, error)
 	GetLinkByLinkID(ctx context.Context, linkID uuid.UUID) (Link, error)
 	GetLumeByID(ctx context.Context, id int64) (Lume, error)
 	GetLumeByLumeID(ctx context.Context, lumeID uuid.UUID) (Lume, error)
+	GetLumoByID(ctx context.Context, id int64) (Lumo, error)
+	GetLumoByLumoID(ctx context.Context, lumoID uuid.UUID) (Lumo, error)
 	ListLinksByEitherLumeID(ctx context.Context, arg ListLinksByEitherLumeIDParams) ([]Link, error)
 	ListLinksByFromLumeID(ctx context.Context, arg ListLinksByFromLumeIDParams) ([]Link, error)
 	ListLinksByLumeIDAndType(ctx context.Context, arg ListLinksByLumeIDAndTypeParams) ([]Link, error)
@@ -32,9 +38,11 @@ type Querier interface {
 	ListLinksByType(ctx context.Context, arg ListLinksByTypeParams) ([]Link, error)
 	ListLumesByLumoID(ctx context.Context, arg ListLumesByLumoIDParams) ([]Lume, error)
 	ListLumesByType(ctx context.Context, arg ListLumesByTypeParams) ([]Lume, error)
+	ListLumosByUserID(ctx context.Context, arg ListLumosByUserIDParams) ([]Lumo, error)
 	SearchLumesByLocation(ctx context.Context, arg SearchLumesByLocationParams) ([]Lume, error)
 	UpdateLink(ctx context.Context, arg UpdateLinkParams) (Link, error)
 	UpdateLume(ctx context.Context, arg UpdateLumeParams) (Lume, error)
+	UpdateLumo(ctx context.Context, arg UpdateLumoParams) (Lumo, error)
 }
 
 var _ Querier = (*Queries)(nil)

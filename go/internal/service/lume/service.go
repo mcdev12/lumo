@@ -7,14 +7,12 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
-	"google.golang.org/protobuf/types/known/timestamppb"
 
 	applume "github.com/mcdev12/lumo/go/internal/app/lume"
 	pb "github.com/mcdev12/lumo/go/internal/genproto/lume"
 	modellume "github.com/mcdev12/lumo/go/internal/models/lume"
 )
 
-// Domain errors
 var (
 	ErrInvalidID = errors.New("invalid ID format")
 )
@@ -60,10 +58,10 @@ func (s *Service) CreateLume(ctx context.Context, req *connect.Request[pb.Create
 
 	domainLume, err := s.app.CreateLume(ctx, appReq)
 	if err != nil {
-		return nil, s.mapErrorToConnectError(err)
+		return nil, mapErrorToConnectError(err)
 	}
 
-	pbRespLume, err := s.toPbLume(domainLume)
+	pbRespLume, err := toPbLume(domainLume)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
@@ -90,10 +88,10 @@ func (s *Service) GetLume(ctx context.Context, req *connect.Request[pb.GetLumeRe
 	}
 
 	if err != nil {
-		return nil, s.mapErrorToConnectError(err)
+		return nil, mapErrorToConnectError(err)
 	}
 
-	pbLume, err := s.toPbLume(domainLume)
+	pbLume, err := toPbLume(domainLume)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
@@ -145,12 +143,12 @@ func (s *Service) ListLumes(ctx context.Context, req *connect.Request[pb.ListLum
 	}
 
 	if err != nil {
-		return nil, s.mapErrorToConnectError(err)
+		return nil, mapErrorToConnectError(err)
 	}
 
 	pbLumes := make([]*pb.Lume, len(domainLumes))
 	for i, domainLume := range domainLumes {
-		pbLume, err := s.toPbLume(domainLume)
+		pbLume, err := toPbLume(domainLume)
 		if err != nil {
 			return nil, connect.NewError(connect.CodeInternal, err)
 		}
@@ -184,10 +182,10 @@ func (s *Service) UpdateLume(ctx context.Context, req *connect.Request[pb.Update
 	// Use LumeId (UUID) for updates, not internal ID
 	domainLume, err := s.app.UpdateLumeByLumeID(ctx, pbLume.GetLumeId(), appReq)
 	if err != nil {
-		return nil, s.mapErrorToConnectError(err)
+		return nil, mapErrorToConnectError(err)
 	}
 
-	pbRespLume, err := s.toPbLume(domainLume)
+	pbRespLume, err := toPbLume(domainLume)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
@@ -213,7 +211,7 @@ func (s *Service) DeleteLume(ctx context.Context, req *connect.Request[pb.Delete
 	}
 
 	if err != nil {
-		return nil, s.mapErrorToConnectError(err)
+		return nil, mapErrorToConnectError(err)
 	}
 
 	return connect.NewResponse(&pb.DeleteLumeResponse{}), nil
@@ -318,106 +316,4 @@ func (s *Service) toAppUpdateRequest(pbLume *pb.Lume) (applume.UpdateLumeRequest
 		CategoryTags: pbLume.GetCategoryTags(),
 		BookingLink:  bookingLink,
 	}, nil
-}
-
-// toPbLume converts a domain Lume to a protobuf Lume
-func (s *Service) toPbLume(domainLume *modellume.Lume) (*pb.Lume, error) {
-	pbLumeType, err := s.toPbLumeType(domainLume.Type)
-	if err != nil {
-		return nil, err
-	}
-
-	// Convert timestamps
-	var dateStart, dateEnd *timestamppb.Timestamp
-	if domainLume.DateStart != nil {
-		dateStart = timestamppb.New(*domainLume.DateStart)
-	}
-	if domainLume.DateEnd != nil {
-		dateEnd = timestamppb.New(*domainLume.DateEnd)
-	}
-
-	// Convert optional fields
-	var latitude, longitude float64
-	var address, bookingLink string
-
-	if domainLume.Latitude != nil {
-		latitude = *domainLume.Latitude
-	}
-	if domainLume.Longitude != nil {
-		longitude = *domainLume.Longitude
-	}
-	if domainLume.Address != nil {
-		address = *domainLume.Address
-	}
-	if domainLume.BookingLink != nil {
-		bookingLink = *domainLume.BookingLink
-	}
-
-	return &pb.Lume{
-		LumeId:       domainLume.LumeID,
-		LumoId:       domainLume.LumoID,
-		Type:         pbLumeType,
-		Name:         domainLume.Name,
-		DateStart:    dateStart,
-		DateEnd:      dateEnd,
-		Latitude:     latitude,
-		Longitude:    longitude,
-		Address:      address,
-		Description:  domainLume.Description,
-		Images:       domainLume.Images,
-		CategoryTags: domainLume.CategoryTags,
-		BookingLink:  bookingLink,
-		CreatedAt:    timestamppb.New(domainLume.CreatedAt),
-		UpdatedAt:    timestamppb.New(domainLume.UpdatedAt),
-	}, nil
-}
-
-// toPbLumeType converts a domain LumeType to a protobuf LumeType
-func (s *Service) toPbLumeType(domainType modellume.LumeType) (pb.LumeType, error) {
-	switch domainType {
-	case modellume.LumeTypeUnspecified:
-		return pb.LumeType_LUME_TYPE_UNSPECIFIED, nil
-	case modellume.LumeTypeCity:
-		return pb.LumeType_LUME_TYPE_CITY, nil
-	case modellume.LumeTypeAttraction:
-		return pb.LumeType_LUME_TYPE_ATTRACTION, nil
-	case modellume.LumeTypeAccommodation:
-		return pb.LumeType_LUME_TYPE_ACCOMMODATION, nil
-	case modellume.LumeTypeRestaurant:
-		return pb.LumeType_LUME_TYPE_RESTAURANT, nil
-	case modellume.LumeTypeTransportHub:
-		return pb.LumeType_LUME_TYPE_TRANSPORT_HUB, nil
-	case modellume.LumeTypeActivity:
-		return pb.LumeType_LUME_TYPE_ACTIVITY, nil
-	case modellume.LumeTypeShopping:
-		return pb.LumeType_LUME_TYPE_SHOPPING, nil
-	case modellume.LumeTypeEntertainment:
-		return pb.LumeType_LUME_TYPE_ENTERTAINMENT, nil
-	case modellume.LumeTypeCustom:
-		return pb.LumeType_LUME_TYPE_CUSTOM, nil
-	default:
-		return pb.LumeType_LUME_TYPE_UNSPECIFIED, errors.New("unknown lume type")
-	}
-}
-
-// mapErrorToConnectError maps domain errors to Connect errors
-func (s *Service) mapErrorToConnectError(err error) error {
-	switch {
-	case errors.Is(err, applume.ErrLumeNotFound):
-		return connect.NewError(connect.CodeNotFound, err)
-	case errors.Is(err, applume.ErrInvalidLumoID):
-		return connect.NewError(connect.CodeInvalidArgument, err)
-	case errors.Is(err, applume.ErrInvalidLumeID):
-		return connect.NewError(connect.CodeInvalidArgument, err)
-	case errors.Is(err, applume.ErrInvalidLumeType):
-		return connect.NewError(connect.CodeInvalidArgument, err)
-	case errors.Is(err, applume.ErrEmptyLabel):
-		return connect.NewError(connect.CodeInvalidArgument, err)
-	case errors.Is(err, applume.ErrInvalidMetadata):
-		return connect.NewError(connect.CodeInvalidArgument, err)
-	case errors.Is(err, ErrInvalidID):
-		return connect.NewError(connect.CodeInvalidArgument, err)
-	default:
-		return connect.NewError(connect.CodeInternal, err)
-	}
 }

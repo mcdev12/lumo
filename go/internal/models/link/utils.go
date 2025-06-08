@@ -7,18 +7,18 @@ import (
 	"github.com/google/uuid"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	linkpb "github.com/mcdev12/lumo/go/internal/genproto/protobuf/link"
+	linkpb "github.com/mcdev12/lumo/go/internal/genproto/link"
 )
 
 // DomainToProto converts domain Link to protobuf Link
 func DomainToProto(domainLink *Link) *linkpb.Link {
 	proto := &linkpb.Link{
-		LinkId:        domainLink.LinkID,
-		FromLumeId:    domainLink.FromLumeID,
-		ToLumeId:      domainLink.ToLumeID,
-		Type:          DomainLinkTypeToProto(domainLink.Type),
-		CreatedAt:     timestamppb.New(domainLink.CreatedAt),
-		UpdatedAt:     timestamppb.New(domainLink.UpdatedAt),
+		LinkId:     domainLink.LinkID,
+		FromLumeId: domainLink.FromLumeID,
+		ToLumeId:   domainLink.ToLumeID,
+		Type:       DomainLinkTypeToProto(domainLink.Type),
+		CreatedAt:  timestamppb.New(domainLink.CreatedAt),
+		UpdatedAt:  timestamppb.New(domainLink.UpdatedAt),
 	}
 
 	// Handle optional notes

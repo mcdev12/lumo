@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package lumo;
+package lumo.v1;
 
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/empty.proto";
@@ -52,5 +52,5 @@ message ListLumosRequest {
 }
 message ListLumosResponse {
   repeated Lumo lumos = 1;
-  string        next_page_token = 2;
+  string next_page_token = 2;
 }

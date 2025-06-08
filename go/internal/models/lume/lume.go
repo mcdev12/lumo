@@ -85,21 +85,21 @@ func NewLume(lumoID string, lumeType LumeType, name string) *Lume {
 }
 
 // IsValid performs basic validation on the Lume
-func (l *Lume) IsValid() bool {
-	if l.LumeID == "" {
-		return false
-	}
-	if l.LumoID == "" {
-		return false
-	}
-	if l.Name == "" {
-		return false
-	}
-	if l.Type == "" || l.Type == LumeTypeUnspecified {
-		return false
-	}
-	return true
-}
+//func (l *Lume) IsValid() bool {
+//	if l.LumeID == "" {
+//		return false
+//	}
+//	if l.LumoID == "" {
+//		return false
+//	}
+//	if l.Name == "" {
+//		return false
+//	}
+//	if l.Type == "" || l.Type == LumeTypeUnspecified {
+//		return false
+//	}
+//	return true
+//}
 
 // HasLocation returns true if the Lume has GPS coordinates
 func (l *Lume) HasLocation() bool {

@@ -1,25 +1,23 @@
 package lume
 
 import (
-	"database/sql/driver"
 	"time"
 
-	"github.com/lib/pq"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	lumepb "github.com/mcdev12/lumo/go/internal/genproto/protobuf/lume"
+	lumepb "github.com/mcdev12/lumo/go/internal/genproto/lume"
 )
 
 // StringArray handles PostgreSQL text arrays
-type StringArray []string
-
-func (a StringArray) Value() (driver.Value, error) {
-	return pq.Array(a).Value()
-}
-
-func (a *StringArray) Scan(value interface{}) error {
-	return pq.Array(a).Scan(value)
-}
+//type StringArray []string
+//
+//func (a StringArray) Value() (driver.Value, error) {
+//	return pq.Array(a).Value()
+//}
+//
+//func (a *StringArray) Scan(value interface{}) error {
+//	return pq.Array(a).Scan(value)
+//}
 
 // DomainToProto converts domain Lume to protobuf Lume
 func DomainToProto(domainLume *Lume) *lumepb.Lume {
@@ -29,8 +27,8 @@ func DomainToProto(domainLume *Lume) *lumepb.Lume {
 		Type:         DomainLumeTypeToProto(domainLume.Type),
 		Name:         domainLume.Name,
 		Description:  domainLume.Description,
-		Images:       EnsureStringArray(domainLume.Images),
-		CategoryTags: EnsureStringArray(domainLume.CategoryTags),
+		Images:       domainLume.Images,
+		CategoryTags: domainLume.CategoryTags,
 		CreatedAt:    timestamppb.New(domainLume.CreatedAt),
 		UpdatedAt:    timestamppb.New(domainLume.UpdatedAt),
 	}
@@ -72,8 +70,8 @@ func ProtoToDomain(protoLume *lumepb.Lume) *Lume {
 		Type:         ProtoLumeTypeToDomain(protoLume.Type),
 		Name:         protoLume.Name,
 		Description:  protoLume.Description,
-		Images:       EnsureStringArray(protoLume.Images),
-		CategoryTags: EnsureStringArray(protoLume.CategoryTags),
+		Images:       protoLume.Images,
+		CategoryTags: protoLume.CategoryTags,
 		CreatedAt:    protoLume.CreatedAt.AsTime(),
 		UpdatedAt:    protoLume.UpdatedAt.AsTime(),
 	}
@@ -110,55 +108,55 @@ func ProtoToDomain(protoLume *lumepb.Lume) *Lume {
 }
 
 // Proto LumeType conversion functions
-func StringToLumeType(s string) lumepb.LumeType {
-	switch s {
-	case "CITY":
-		return lumepb.LumeType_LUME_TYPE_CITY
-	case "ATTRACTION":
-		return lumepb.LumeType_LUME_TYPE_ATTRACTION
-	case "ACCOMMODATION":
-		return lumepb.LumeType_LUME_TYPE_ACCOMMODATION
-	case "RESTAURANT":
-		return lumepb.LumeType_LUME_TYPE_RESTAURANT
-	case "TRANSPORT_HUB":
-		return lumepb.LumeType_LUME_TYPE_TRANSPORT_HUB
-	case "ACTIVITY":
-		return lumepb.LumeType_LUME_TYPE_ACTIVITY
-	case "SHOPPING":
-		return lumepb.LumeType_LUME_TYPE_SHOPPING
-	case "ENTERTAINMENT":
-		return lumepb.LumeType_LUME_TYPE_ENTERTAINMENT
-	case "CUSTOM":
-		return lumepb.LumeType_LUME_TYPE_CUSTOM
-	default:
-		return lumepb.LumeType_LUME_TYPE_UNSPECIFIED
-	}
-}
+//func StringToLumeType(s string) lumepb.LumeType {
+//	switch s {
+//	case "CITY":
+//		return lumepb.LumeType_LUME_TYPE_CITY
+//	case "ATTRACTION":
+//		return lumepb.LumeType_LUME_TYPE_ATTRACTION
+//	case "ACCOMMODATION":
+//		return lumepb.LumeType_LUME_TYPE_ACCOMMODATION
+//	case "RESTAURANT":
+//		return lumepb.LumeType_LUME_TYPE_RESTAURANT
+//	case "TRANSPORT_HUB":
+//		return lumepb.LumeType_LUME_TYPE_TRANSPORT_HUB
+//	case "ACTIVITY":
+//		return lumepb.LumeType_LUME_TYPE_ACTIVITY
+//	case "SHOPPING":
+//		return lumepb.LumeType_LUME_TYPE_SHOPPING
+//	case "ENTERTAINMENT":
+//		return lumepb.LumeType_LUME_TYPE_ENTERTAINMENT
+//	case "CUSTOM":
+//		return lumepb.LumeType_LUME_TYPE_CUSTOM
+//	default:
+//		return lumepb.LumeType_LUME_TYPE_UNSPECIFIED
+//	}
+//}
 
-func LumeTypeToString(lt lumepb.LumeType) string {
-	switch lt {
-	case lumepb.LumeType_LUME_TYPE_CITY:
-		return "CITY"
-	case lumepb.LumeType_LUME_TYPE_ATTRACTION:
-		return "ATTRACTION"
-	case lumepb.LumeType_LUME_TYPE_ACCOMMODATION:
-		return "ACCOMMODATION"
-	case lumepb.LumeType_LUME_TYPE_RESTAURANT:
-		return "RESTAURANT"
-	case lumepb.LumeType_LUME_TYPE_TRANSPORT_HUB:
-		return "TRANSPORT_HUB"
-	case lumepb.LumeType_LUME_TYPE_ACTIVITY:
-		return "ACTIVITY"
-	case lumepb.LumeType_LUME_TYPE_SHOPPING:
-		return "SHOPPING"
-	case lumepb.LumeType_LUME_TYPE_ENTERTAINMENT:
-		return "ENTERTAINMENT"
-	case lumepb.LumeType_LUME_TYPE_CUSTOM:
-		return "CUSTOM"
-	default:
-		return "LUME_TYPE_UNSPECIFIED"
-	}
-}
+//func LumeTypeToString(lt lumepb.LumeType) string {
+//	switch lt {
+//	case lumepb.LumeType_LUME_TYPE_CITY:
+//		return "CITY"
+//	case lumepb.LumeType_LUME_TYPE_ATTRACTION:
+//		return "ATTRACTION"
+//	case lumepb.LumeType_LUME_TYPE_ACCOMMODATION:
+//		return "ACCOMMODATION"
+//	case lumepb.LumeType_LUME_TYPE_RESTAURANT:
+//		return "RESTAURANT"
+//	case lumepb.LumeType_LUME_TYPE_TRANSPORT_HUB:
+//		return "TRANSPORT_HUB"
+//	case lumepb.LumeType_LUME_TYPE_ACTIVITY:
+//		return "ACTIVITY"
+//	case lumepb.LumeType_LUME_TYPE_SHOPPING:
+//		return "SHOPPING"
+//	case lumepb.LumeType_LUME_TYPE_ENTERTAINMENT:
+//		return "ENTERTAINMENT"
+//	case lumepb.LumeType_LUME_TYPE_CUSTOM:
+//		return "CUSTOM"
+//	default:
+//		return "LUME_TYPE_UNSPECIFIED"
+//	}
+//}
 
 // Domain LumeType to Proto LumeType conversion
 func DomainLumeTypeToProto(dt LumeType) lumepb.LumeType {
@@ -228,9 +226,9 @@ func ValidateDateRange(start, end *time.Time) bool {
 }
 
 // Helper to ensure empty arrays instead of nil for consistency
-func EnsureStringArray(arr []string) []string {
-	if arr == nil {
-		return make([]string, 0)
-	}
-	return arr
-}
+//func EnsureStringArray(arr []string) []string {
+//	if arr == nil {
+//		return make([]string, 0)
+//	}
+//	return arr
+//}

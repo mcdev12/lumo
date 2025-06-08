@@ -43,3 +43,12 @@ type Lume struct {
 	CreatedAt    time.Time       `json:"created_at"`
 	UpdatedAt    time.Time       `json:"updated_at"`
 }
+
+type Lumo struct {
+	ID        int64     `json:"id"`
+	LumoID    uuid.UUID `json:"lumo_id"`
+	UserID    uuid.UUID `json:"user_id"`
+	Title     string    `json:"title"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}

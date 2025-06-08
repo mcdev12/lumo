@@ -12,11 +12,19 @@ import (
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 
+	linkApp "github.com/mcdev12/lumo/go/internal/app/link"
 	lumeApp "github.com/mcdev12/lumo/go/internal/app/lume"
-	"github.com/mcdev12/lumo/go/internal/genproto/protobuf/lume/lumeconnect"
+	lumoApp "github.com/mcdev12/lumo/go/internal/app/lumo"
+	"github.com/mcdev12/lumo/go/internal/genproto/link/linkconnect"
+	"github.com/mcdev12/lumo/go/internal/genproto/lume/lumeconnect"
+	"github.com/mcdev12/lumo/go/internal/genproto/lumo/lumoconnect"
 	"github.com/mcdev12/lumo/go/internal/repository/db"
+	linkRepo "github.com/mcdev12/lumo/go/internal/repository/link"
 	lumeRepo "github.com/mcdev12/lumo/go/internal/repository/lume"
+	lumoRepo "github.com/mcdev12/lumo/go/internal/repository/lumo"
+	linkService "github.com/mcdev12/lumo/go/internal/service/link"
 	lumeService "github.com/mcdev12/lumo/go/internal/service/lume"
+	lumoService "github.com/mcdev12/lumo/go/internal/service/lumo"
 )
 
 // getEnv returns the value of an environment variable or a default value if not set
@@ -60,19 +68,42 @@ func main() {
 	defer dbConn.Close()
 
 	// Initialize layers
-	repo := lumeRepo.NewRepository(dbConn)
-	app := lumeApp.NewLumeApp(repo)
-	lumeSvc := lumeService.NewService(app)
+	// Lume service
+	lumeRepository := lumeRepo.NewRepository(dbConn)
+	lumeApplication := lumeApp.NewLumeApp(lumeRepository)
+	lumeSvc := lumeService.NewService(lumeApplication)
 
-	// Create Connect adapter for the Lume service
+	// Lumo service
+	lumoRepository := lumoRepo.NewRepository(dbConn)
+	lumoApplication := lumoApp.NewLumoApp(lumoRepository)
+	lumoSvc := lumoService.NewService(lumoApplication)
+
+	// Link service
+	linkRepository := linkRepo.NewRepository(dbConn)
+	linkApplication := linkApp.NewLinkApp(linkRepository)
+	linkSvc := linkService.NewService(linkApplication)
+
+	// Create Connect adapters
 	lumeServicePath, lumeConnectSvc := lumeconnect.NewLumeServiceHandler(
 		lumeSvc,
 		connect.WithInterceptors(
 		// Add your interceptors here
 		),
 	)
+	lumoServicePath, lumoConnectSvc := lumoconnect.NewLumoServiceHandler(
+		lumoSvc,
+		connect.WithInterceptors(
+		// Add your interceptors here
+		),
+	)
+	linkServicePath, linkConnectSvc := linkconnect.NewLinkServiceHandler(
+		linkSvc,
+		connect.WithInterceptors(
+		// Add your interceptors here
+		),
+	)
 
-	// Set up CORS middleware
+	// CORS middleware
 	corsMiddleware := func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -84,21 +115,30 @@ func main() {
 				w.WriteHeader(http.StatusOK)
 				return
 			}
-
 			h.ServeHTTP(w, r)
 		})
 	}
 
-	// Set up routes
+	// Set up HTTP mux and handlers
 	mux := http.NewServeMux()
 	mux.Handle(lumeServicePath, lumeConnectSvc)
+	mux.Handle(lumoServicePath, lumoConnectSvc)
+	mux.Handle(linkServicePath, linkConnectSvc)
 
-	// Register gRPC reflection service for grpcui
-	reflector := grpcreflect.NewStaticReflector(lumeconnect.LumeServiceName)
-	mux.Handle(grpcreflect.NewHandlerV1(reflector))
-	mux.Handle(grpcreflect.NewHandlerV1Alpha(reflector))
+	// === Reflection for grpcui/grpcurl ===
+	reflector := grpcreflect.NewStaticReflector(
+		lumeconnect.LumeServiceName,
+		lumoconnect.LumoServiceName,
+		linkconnect.LinkServiceName,
+	)
+	// Register both v1 and v1alpha reflection handlers
+	pathV1, handlerV1 := grpcreflect.NewHandlerV1(reflector)
+	mux.Handle(pathV1, handlerV1)
 
-	// Use h2c to support HTTP/2 without TLS
+	pathAlpha, handlerAlpha := grpcreflect.NewHandlerV1Alpha(reflector)
+	mux.Handle(pathAlpha, handlerAlpha)
+
+	// Wrap with CORS + h2c (HTTP/2 without TLS)
 	handler := corsMiddleware(mux)
 	server := &http.Server{
 		Addr:    ":8080",

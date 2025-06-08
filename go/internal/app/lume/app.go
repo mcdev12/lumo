@@ -42,14 +42,14 @@ type CreateLumeRequest struct {
 	Description string
 	Metadata    map[string]interface{}
 	// Additional fields from the domain model
-	DateStart   *time.Time
-	DateEnd     *time.Time
-	Latitude    *float64
-	Longitude   *float64
-	Address     *string
-	Images      []string
+	DateStart    *time.Time
+	DateEnd      *time.Time
+	Latitude     *float64
+	Longitude    *float64
+	Address      *string
+	Images       []string
 	CategoryTags []string
-	BookingLink *string
+	BookingLink  *string
 }
 
 // UpdateLumeRequest represents the business layer's update request
@@ -59,14 +59,14 @@ type UpdateLumeRequest struct {
 	Description string
 	Metadata    map[string]interface{}
 	// Additional fields from the domain model
-	DateStart   *time.Time
-	DateEnd     *time.Time
-	Latitude    *float64
-	Longitude   *float64
-	Address     *string
-	Images      []string
+	DateStart    *time.Time
+	DateEnd      *time.Time
+	Latitude     *float64
+	Longitude    *float64
+	Address      *string
+	Images       []string
 	CategoryTags []string
-	BookingLink *string
+	BookingLink  *string
 }
 
 // ListLumesRequest represents pagination parameters
@@ -86,13 +86,13 @@ type ListLumesByTypeRequest struct {
 
 // SearchLumesByLocationRequest represents location search parameters
 type SearchLumesByLocationRequest struct {
-	LumoID  string
-	MinLat  float64
-	MaxLat  float64
-	MinLng  float64
-	MaxLng  float64
-	Limit   int32
-	Offset  int32
+	LumoID string
+	MinLat float64
+	MaxLat float64
+	MinLng float64
+	MaxLng float64
+	Limit  int32
+	Offset int32
 }
 
 // App handles business logic for Lumes
@@ -109,10 +109,6 @@ func NewLumeApp(repo LumeRepository) *App {
 
 // CreateLume creates a new Lume with business logic validation
 func (a *App) CreateLume(ctx context.Context, req CreateLumeRequest) (*modellume.Lume, error) {
-	if err := a.validateCreateRequest(req); err != nil {
-		return nil, err
-	}
-
 	domainLume, err := a.toDomainModelForCreate(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert request: %w", err)
@@ -160,10 +156,6 @@ func (a *App) ListLumesByType(ctx context.Context, req ListLumesByTypeRequest) (
 		return nil, ErrInvalidLumoID
 	}
 
-	if !a.isValidLumeType(req.Type) {
-		return nil, ErrInvalidLumeType
-	}
-
 	limit := req.Limit
 	if limit <= 0 || limit > 100 {
 		limit = 50
@@ -198,10 +190,6 @@ func (a *App) SearchLumesByLocation(ctx context.Context, req SearchLumesByLocati
 
 // UpdateLume updates an existing Lume
 func (a *App) UpdateLume(ctx context.Context, id int64, req UpdateLumeRequest) (*modellume.Lume, error) {
-	if err := a.validateUpdateRequest(req); err != nil {
-		return nil, err
-	}
-
 	// First get the existing lume
 	existingLume, err := a.repo.GetLumeByID(ctx, id)
 	if err != nil {
@@ -226,10 +214,6 @@ func (a *App) UpdateLumeByLumeID(ctx context.Context, lumeID string, req UpdateL
 		return nil, err
 	}
 
-	if err := a.validateUpdateRequest(req); err != nil {
-		return nil, err
-	}
-
 	// Update the domain model with new values
 	updatedLume := a.updateDomainModel(existingLume, req)
 
@@ -246,7 +230,7 @@ func (a *App) DeleteLumeByLumeID(ctx context.Context, lumeID string) error {
 	if _, err := uuid.Parse(lumeID); err != nil {
 		return ErrInvalidLumeID
 	}
-	
+
 	return a.repo.DeleteLumeByLumeID(ctx, lumeID)
 }
 
@@ -255,58 +239,10 @@ func (a *App) CountLumesByLumo(ctx context.Context, lumoID string) (int64, error
 	if _, err := uuid.Parse(lumoID); err != nil {
 		return 0, ErrInvalidLumoID
 	}
-	
+
 	return a.repo.CountLumesByLumo(ctx, lumoID)
 }
 
-// Validation methods
-func (a *App) validateCreateRequest(req CreateLumeRequest) error {
-	if req.Label == "" {
-		return ErrEmptyLabel
-	}
-
-	if _, err := uuid.Parse(req.LumoID); err != nil {
-		return ErrInvalidLumoID
-	}
-
-	if !a.isValidLumeType(req.Type) {
-		return ErrInvalidLumeType
-	}
-
-	return nil
-}
-
-func (a *App) validateUpdateRequest(req UpdateLumeRequest) error {
-	if req.Label == "" {
-		return ErrEmptyLabel
-	}
-
-	if !a.isValidLumeType(req.Type) {
-		return ErrInvalidLumeType
-	}
-
-	return nil
-}
-
-func (a *App) isValidLumeType(lumeType modellume.LumeType) bool {
-	switch lumeType {
-	case modellume.LumeTypeUnspecified,
-		modellume.LumeTypeCity,
-		modellume.LumeTypeAttraction,
-		modellume.LumeTypeAccommodation,
-		modellume.LumeTypeRestaurant,
-		modellume.LumeTypeTransportHub,
-		modellume.LumeTypeActivity,
-		modellume.LumeTypeShopping,
-		modellume.LumeTypeEntertainment,
-		modellume.LumeTypeCustom:
-		return true
-	default:
-		return false
-	}
-}
-
-// Conversion methods
 // toDomainModelForCreate creates a new domain model from the create request
 func (a *App) toDomainModelForCreate(req CreateLumeRequest) (*modellume.Lume, error) {
 	// Create a new domain model

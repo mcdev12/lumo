@@ -1,10 +1,11 @@
 // File: service.proto
 syntax = "proto3";
 
-package lumo;
+package lume;
 
 import "google/protobuf/timestamp.proto";
 import "lume/lume.proto";
+
 
 option go_package = "github.com/mcdev12/lumo/go/internal/genproto/lume;lume";
 

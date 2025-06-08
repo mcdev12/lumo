@@ -58,11 +58,16 @@ stack-logs:
 	@echo "Viewing logs for all services..."
 	docker-compose logs -f
 
-# Build all services
-stack-build:
+# Build and restart the entire application stack
+stack-restart:
+	@echo "Stopping current stack..."
+	docker-compose down
 	@echo "Building all services..."
 	docker-compose build
-
+	@echo "Starting the stack..."
+	docker-compose up -d
+	@echo "Stack rebuild complete!"
+    
 # Clean up all containers and volumes
 stack-clean:
 	@echo "Cleaning up all containers and volumes..."

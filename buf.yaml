@@ -7,4 +7,6 @@ breaking:
     - FILE
 lint:
   use:
-    - DEFAULT
+    - STANDARD
+deps:
+  - buf.build/bufbuild/protovalidate:v0.12.0

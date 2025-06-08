@@ -1,7 +1,7 @@
 // File: lume.proto
 syntax = "proto3";
 
-package lumo;
+package lume;
 
 import "google/protobuf/timestamp.proto";
 

@@ -1,31 +1,14 @@
 # buf.gen.yaml (v2)
 version: v2
 clean: true
-
-# Code‐generation plugins
 plugins:
-  # Generate Go code using the official Buf‐hosted Go plugin
   - remote: buf.build/protocolbuffers/go
     out: go/internal/genproto
     opt:
       - paths=source_relative
-
-  # Generate Connect-Go code
   - remote: buf.build/connectrpc/go
     out: go/internal/genproto
     opt:
       - paths=source_relative
-
-  # Uncomment to generate a TypeScript ES client
-  # - remote: buf.build/protocolbuffers/typescript
-  #   out: js/web/src/genproto
-  #   opt:
-  #     - target=ts
-  # - remote: buf.build/connectrpc/connect-web
-  #   out: js/web/src/genproto
-  #   opt:
-  #     - target=ts
-
-# Which Protobuf files to generate from (defaults to module root if omitted)
 inputs:
   - directory: protobuf
