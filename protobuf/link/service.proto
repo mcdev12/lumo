@@ -10,7 +10,7 @@ option go_package = "github.com/mcdev12/lumo/go/internal/genproto/link;link";
 
 service LinkService {
   // Create a new Link edge
-  rpc CreateLink(CreateLinkRequest) returns (Link);
+  rpc CreateLink(CreateLinkRequest) returns (CreateLinkResponse);
 
   // Fetch a Link by its UUID
   rpc GetLink(GetLinkRequest) returns (GetLinkResponse);

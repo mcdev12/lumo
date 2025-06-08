@@ -10,7 +10,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	applume "github.com/mcdev12/lumo/go/internal/app/lume"
-	pb "github.com/mcdev12/lumo/go/internal/genproto/protobuf/lume"
+	pb "github.com/mcdev12/lumo/go/internal/genproto/lume"
 	modellume "github.com/mcdev12/lumo/go/internal/models/lume"
 )
 

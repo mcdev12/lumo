@@ -8,7 +8,7 @@ import (
 	"connectrpc.com/connect"
 
 	applink "github.com/mcdev12/lumo/go/internal/app/link"
-	pb "github.com/mcdev12/lumo/go/internal/genproto/protobuf/link"
+	pb "github.com/mcdev12/lumo/go/internal/genproto/link"
 	modellink "github.com/mcdev12/lumo/go/internal/models/link"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
@@ -46,7 +46,7 @@ func NewService(app LinkApp) *Service {
 }
 
 // CreateLink creates a new Link
-func (s *Service) CreateLink(ctx context.Context, req *connect.Request[pb.CreateLinkRequest]) (*connect.Response[pb.Link], error) {
+func (s *Service) CreateLink(ctx context.Context, req *connect.Request[pb.CreateLinkRequest]) (*connect.Response[pb.CreateLinkResponse], error) {
 	pbLink := req.Msg.GetLink()
 	if pbLink == nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("link is required"))
@@ -62,11 +62,13 @@ func (s *Service) CreateLink(ctx context.Context, req *connect.Request[pb.Create
 		return nil, s.mapErrorToConnectError(err)
 	}
 
-	return connect.NewResponse(modellink.DomainToProto(domainLink)), nil
+	return connect.NewResponse(&pb.CreateLinkResponse{
+		Link: modellink.DomainToProto(domainLink),
+	}), nil
 }
 
 // GetLink retrieves a Link by ID
-func (s *Service) GetLink(ctx context.Context, req *connect.Request[pb.GetLinkRequest]) (*connect.Response[pb.Link], error) {
+func (s *Service) GetLink(ctx context.Context, req *connect.Request[pb.GetLinkRequest]) (*connect.Response[pb.GetLinkResponse], error) {
 	linkID := req.Msg.GetLinkId()
 	if linkID == "" {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("link_id is required"))
@@ -88,11 +90,13 @@ func (s *Service) GetLink(ctx context.Context, req *connect.Request[pb.GetLinkRe
 		return nil, s.mapErrorToConnectError(err)
 	}
 
-	return connect.NewResponse(modellink.DomainToProto(domainLink)), nil
+	return connect.NewResponse(&pb.GetLinkResponse{
+		Link: modellink.DomainToProto(domainLink),
+	}), nil
 }
 
 // UpdateLink updates an existing Link
-func (s *Service) UpdateLink(ctx context.Context, req *connect.Request[pb.UpdateLinkRequest]) (*connect.Response[pb.Link], error) {
+func (s *Service) UpdateLink(ctx context.Context, req *connect.Request[pb.UpdateLinkRequest]) (*connect.Response[pb.UpdateLinkResponse], error) {
 	pbLink := req.Msg.GetLink()
 	if pbLink == nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("link is required"))
@@ -113,7 +117,10 @@ func (s *Service) UpdateLink(ctx context.Context, req *connect.Request[pb.Update
 		return nil, s.mapErrorToConnectError(err)
 	}
 
-	return connect.NewResponse(modellink.DomainToProto(domainLink)), nil
+	resp := pb.UpdateLinkResponse{
+		Link: modellink.DomainToProto(domainLink),
+	}
+	return connect.NewResponse(&resp), nil
 }
 
 // DeleteLink deletes a Link by ID

@@ -10,11 +10,12 @@ option go_package = "github.com/mcdev12/lumo/go/internal/genproto/lumo;lumo";
 
 
 service LumoService {
-  rpc CreateLumo(CreateLumoRequest) returns (CreateLumoResponse);
-  rpc GetLumo(GetLumoRequest) returns (GetLumoResponse);
+  rpc CreateLumo(CreateLumoRequest)  returns (CreateLumoResponse);
+  rpc GetLumo(GetLumoRequest)        returns (GetLumoResponse);
+  rpc UpdateLumo(UpdateLumoRequest)  returns (UpdateLumoResponse);
+  rpc DeleteLumo(DeleteLumoRequest)  returns (google.protobuf.Empty);
+  rpc ListLumos(ListLumosRequest)    returns (ListLumosResponse);
 }
-
-
 
 message CreateLumoRequest {
   Lumo lumo = 1;
@@ -25,9 +26,31 @@ message CreateLumoResponse {
 }
 
 message GetLumoRequest {
-  string lumo_id = 1;
+  string uuid = 1;
 }
 
 message GetLumoResponse {
   Lumo lumo = 1;
+}
+
+message UpdateLumoRequest {
+  Lumo lumo = 1;
+}
+
+message UpdateLumoResponse {
+  Lumo lumo = 1;
+}
+
+message DeleteLumoRequest {
+  string uuid = 1;
+}
+
+message ListLumosRequest {
+  string user_id = 1;
+  int32  page_size = 2;
+  string page_token = 3;
+}
+message ListLumosResponse {
+  repeated Lumo lumos = 1;
+  string        next_page_token = 2;
 }
