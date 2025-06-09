@@ -11,8 +11,10 @@ plugins:
     opt:
       - paths=source_relative
   # Protobuf-ES: emits TS message & enum types
-  - remote: buf.build/bufbuild/es:v2.5.2
+  - local: protoc-gen-es
     out: js/web/src/genproto
+    # Also generate any imported dependencies
     include_imports: true
+    opt: target=ts
 inputs:
   - directory: protobuf

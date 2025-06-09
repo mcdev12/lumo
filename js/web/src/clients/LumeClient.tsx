@@ -1,7 +1,6 @@
 import { createConnectTransport } from "@connectrpc/connect-web";
 import { createClient } from "@connectrpc/connect";
 import {LumeService} from "../genproto/lume/v1/service_pb.js";
-import { CreateLumeRequest } from '../genproto/lume/v1/service_pb.js';
 import { LumeType } from '../genproto/lume/v1/lume_pb.js';
 import { create } from '@bufbuild/protobuf';
 import { CreateLumeRequestSchema } from '../genproto/lume/v1/service_pb.js';
