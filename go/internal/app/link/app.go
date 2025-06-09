@@ -3,10 +3,9 @@ package link
 import (
 	"context"
 	"errors"
-	"time"
-
 	"github.com/google/uuid"
 	modellink "github.com/mcdev12/lumo/go/internal/models/link"
+	"time"
 )
 
 // Domain errors
@@ -35,40 +34,6 @@ type LinkRepository interface {
 	CountLinksByLumeID(ctx context.Context, lumeID string) (int64, error)
 	CountLinksByFromLumeID(ctx context.Context, fromLumeID string) (int64, error)
 	CountLinksByToLumeID(ctx context.Context, toLumeID string) (int64, error)
-}
-
-// CreateLinkRequest represents the business layer's create request
-type CreateLinkRequest struct {
-	FromLumeID    string
-	ToLumeID      string
-	Type          modellink.LinkType
-	Notes         *string
-	SequenceIndex *int32
-	TravelDetails *TravelDetailsRequest
-}
-
-// TravelDetailsRequest represents the travel details for a link
-type TravelDetailsRequest struct {
-	Mode           modellink.TravelMode
-	DurationSec    int32
-	CostEstimate   float64
-	DistanceMeters float64
-}
-
-// UpdateLinkRequest represents the business layer's update request
-type UpdateLinkRequest struct {
-	FromLumeID    string
-	ToLumeID      string
-	Type          modellink.LinkType
-	Notes         *string
-	SequenceIndex *int32
-	TravelDetails *TravelDetailsRequest
-}
-
-// ListLinksRequest represents pagination parameters
-type ListLinksRequest struct {
-	Limit  int32
-	Offset int32
 }
 
 // App handles business logic for Links
@@ -206,73 +171,6 @@ func (a *App) CountLinksByLumeID(ctx context.Context, lumeID string) (int64, err
 	return a.repo.CountLinksByLumeID(ctx, lumeID)
 }
 
-//// validateCreateRequest validates the create request
-//func (a *App) validateCreateRequest(req CreateLinkRequest) error {
-//	if _, err := uuid.Parse(req.FromLumeID); err != nil {
-//		return ErrInvalidLumeID
-//	}
-//	if _, err := uuid.Parse(req.ToLumeID); err != nil {
-//		return ErrInvalidLumeID
-//	}
-//	if !a.isValidLinkType(req.Type) {
-//		return ErrInvalidLinkType
-//	}
-//	if req.Type == modellink.LinkTypeTravel && req.TravelDetails == nil {
-//		return errors.New("travel details required for travel link type")
-//	}
-//	if req.TravelDetails != nil && !a.isValidTravelMode(req.TravelDetails.Mode) {
-//		return ErrInvalidTravelMode
-//	}
-//	return nil
-//}
-//
-//// validateUpdateRequest validates the update request
-//func (a *App) validateUpdateRequest(req UpdateLinkRequest) error {
-//	if _, err := uuid.Parse(req.FromLumeID); err != nil {
-//		return ErrInvalidLumeID
-//	}
-//	if _, err := uuid.Parse(req.ToLumeID); err != nil {
-//		return ErrInvalidLumeID
-//	}
-//	if !a.isValidLinkType(req.Type) {
-//		return ErrInvalidLinkType
-//	}
-//	if req.Type == modellink.LinkTypeTravel && req.TravelDetails == nil {
-//		return errors.New("travel details required for travel link type")
-//	}
-//	if req.TravelDetails != nil && !a.isValidTravelMode(req.TravelDetails.Mode) {
-//		return ErrInvalidTravelMode
-//	}
-//	return nil
-//}
-
-// isValidLinkType checks if the link type is valid
-//func (a *App) isValidLinkType(linkType modellink.LinkType) bool {
-//	switch linkType {
-//	case modellink.LinkTypeTravel,
-//		modellink.LinkTypeRecommended,
-//		modellink.LinkTypeCustom:
-//		return true
-//	default:
-//		return false
-//	}
-//}
-//
-//// isValidTravelMode checks if the travel mode is valid
-//func (a *App) isValidTravelMode(travelMode modellink.TravelMode) bool {
-//	switch travelMode {
-//	case modellink.TravelModeFlight,
-//		modellink.TravelModeTrain,
-//		modellink.TravelModeBus,
-//		modellink.TravelModeDrive,
-//		modellink.TravelModeUber,
-//		modellink.TravelModeMetro:
-//		return true
-//	default:
-//		return false
-//	}
-//}
-
 // toDomainModelForCreate converts a create request to a domain model
 func (a *App) toDomainModelForCreate(req CreateLinkRequest) *modellink.Link {
 	domainLink := modellink.NewLink(req.FromLumeID, req.ToLumeID, req.Type)
@@ -299,22 +197,61 @@ func (a *App) toDomainModelForCreate(req CreateLinkRequest) *modellink.Link {
 
 // updateDomainModel updates an existing domain model with the update request
 func (a *App) updateDomainModel(existingLink *modellink.Link, req UpdateLinkRequest) *modellink.Link {
-	existingLink.FromLumeID = req.FromLumeID
-	existingLink.ToLumeID = req.ToLumeID
-	existingLink.Type = req.Type
-	existingLink.Notes = req.Notes
-	existingLink.SequenceIndex = req.SequenceIndex
+	// Always bump the UpdatedAt
 	existingLink.UpdatedAt = time.Now()
 
-	if req.TravelDetails != nil {
-		existingLink.Travel = &modellink.TravelDetails{
-			Mode:           req.TravelDetails.Mode,
-			DurationSec:    req.TravelDetails.DurationSec,
-			CostEstimate:   req.TravelDetails.CostEstimate,
-			DistanceMeters: req.TravelDetails.DistanceMeters,
+	// Full replace if no fields specified
+	if len(req.UpdateFields) == 0 {
+		existingLink.FromLumeID = req.FromLumeID
+		existingLink.ToLumeID = req.ToLumeID
+		existingLink.Type = req.Type
+
+		// Overwrite travel only if provided
+		if req.TravelDetails != nil {
+			existingLink.Travel = &modellink.TravelDetails{
+				Mode:           req.TravelDetails.Mode,
+				DurationSec:    req.TravelDetails.DurationSec,
+				CostEstimate:   req.TravelDetails.CostEstimate,
+				DistanceMeters: req.TravelDetails.DistanceMeters,
+			}
 		}
-	} else {
-		existingLink.Travel = nil
+		if req.Notes != nil {
+			existingLink.Notes = req.Notes
+		}
+		if req.SequenceIndex != nil {
+			existingLink.SequenceIndex = req.SequenceIndex
+		}
+		return existingLink
+	}
+
+	for _, field := range req.UpdateFields {
+		switch field {
+		case "from_lume_id":
+			existingLink.FromLumeID = req.FromLumeID
+		case "to_lume_id":
+			existingLink.ToLumeID = req.ToLumeID
+		case "type":
+			existingLink.Type = req.Type
+		case "travel":
+			if req.TravelDetails != nil {
+				existingLink.Travel = &modellink.TravelDetails{
+					Mode:           req.TravelDetails.Mode,
+					DurationSec:    req.TravelDetails.DurationSec,
+					CostEstimate:   req.TravelDetails.CostEstimate,
+					DistanceMeters: req.TravelDetails.DistanceMeters,
+				}
+			}
+		case "notes":
+			if req.Notes != nil {
+				existingLink.Notes = req.Notes
+			}
+		case "sequence_index":
+			if req.SequenceIndex != nil {
+				existingLink.SequenceIndex = req.SequenceIndex
+			}
+		default:
+			// ignore unknown paths or log an error
+		}
 	}
 
 	return existingLink

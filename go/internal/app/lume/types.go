@@ -12,7 +12,6 @@ type CreateLumeRequest struct {
 	Name        string
 	Type        modellume.LumeType
 	Description string
-	Metadata    map[string]interface{}
 	// Additional fields from the domain model
 	DateStart    *time.Time
 	DateEnd      *time.Time
@@ -29,7 +28,6 @@ type UpdateLumeRequest struct {
 	Name        string
 	Type        modellume.LumeType
 	Description string
-	Metadata    map[string]interface{}
 	// Additional fields from the domain model
 	DateStart    *time.Time
 	DateEnd      *time.Time

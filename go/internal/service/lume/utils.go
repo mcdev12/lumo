@@ -144,7 +144,6 @@ func (s *Service) toAppUpdateRequest(pbLume *lumepb.UpdateLumeRequest) (applume.
 		bookingLink = &link
 	}
 
-	// TODO: Once the protobuf code is regenerated, uncomment this code to extract field paths from the update mask
 	updateFields := make([]string, 0)
 	if pbLume.GetUpdateMask() != nil {
 		updateFields = pbLume.GetUpdateMask().GetPaths()

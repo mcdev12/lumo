@@ -2,7 +2,9 @@ syntax = "proto3";
 
 package link.v1;
 
+import  "buf/validate/validate.proto";
 import "google/protobuf/empty.proto";
+import "google/protobuf/field_mask.proto";
 import "link/v1/link.proto";
 
 option go_package = "github.com/mcdev12/lumo/go/internal/genproto/link/v1;linkv1";
@@ -25,7 +27,23 @@ service LinkService {
 }
 
 message CreateLinkRequest {
-  Link link = 1;
+  string from_lume_id = 1 [(buf.validate.field).string.min_len = 1];
+  string to_lume_id = 2 [(buf.validate.field).string.min_len = 1];
+  LinkType type = 3 [
+    (buf.validate.field).enum = {not_in: [0]},
+    (buf.validate.field).enum.defined_only = true
+  ];
+  TravelMode mode = 4 [
+    (buf.validate.field).enum = {not_in: [0]},
+    (buf.validate.field).enum.defined_only = true
+  ];
+  TravelDetails travel = 5;
+
+  string duration_est = 6;
+  double cost_estimate = 7;
+  double distance = 8;
+  string notes = 9;
+  int32 sequence_index = 10;
 }
 
 message CreateLinkResponse {
@@ -33,7 +51,9 @@ message CreateLinkResponse {
 }
 
 message GetLinkRequest {
-  string link_id = 1;
+  string link_id = 1 [
+    (buf.validate.field).string.uuid = true
+  ];
 }
 
 message GetLinkResponse {
@@ -41,7 +61,43 @@ message GetLinkResponse {
 }
 
 message UpdateLinkRequest {
-  Link link = 1;
+  google.protobuf.FieldMask update_mask = 1;
+  string link_id = 2 [
+    (buf.validate.field).string.uuid = true
+  ];
+
+  string from_lume_id = 3 [
+    (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE,
+    (buf.validate.field).string.uuid = true
+  ];
+
+  string to_lume_id = 4 [
+    (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE,
+    (buf.validate.field).string.min_len = 1
+  ];
+
+  optional LinkType type = 5 [
+    (buf.validate.field).ignore = IGNORE_IF_UNPOPULATED,
+    (buf.validate.field).enum = {not_in: [0]},
+    (buf.validate.field).enum.defined_only = true
+  ];
+
+  optional TravelMode mode = 6 [
+    (buf.validate.field).ignore = IGNORE_IF_UNPOPULATED,
+    (buf.validate.field).enum = {not_in: [0]},
+    (buf.validate.field).enum.defined_only = true
+  ];
+  TravelDetails travel = 7;
+
+  optional string duration_est = 8 [(buf.validate.field).ignore = IGNORE_IF_UNPOPULATED];
+
+  optional double cost_estimate = 9 [(buf.validate.field).ignore = IGNORE_IF_UNPOPULATED];
+
+  optional double distance = 10 [(buf.validate.field).ignore = IGNORE_IF_UNPOPULATED];
+
+  optional string notes = 11 [(buf.validate.field).ignore = IGNORE_IF_UNPOPULATED];
+
+  optional int32 sequence_index = 12 [(buf.validate.field).ignore = IGNORE_IF_UNPOPULATED];
 }
 
 message UpdateLinkResponse {

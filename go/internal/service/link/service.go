@@ -46,12 +46,12 @@ func NewService(app LinkApp) *Service {
 
 // CreateLink creates a new Link
 func (s *Service) CreateLink(ctx context.Context, req *connect.Request[pb.CreateLinkRequest]) (*connect.Response[pb.CreateLinkResponse], error) {
-	pbLink := req.Msg.GetLink()
-	if pbLink == nil {
+	pbLinkCreate := req.Msg
+	if pbLinkCreate == nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("link is required"))
 	}
 
-	appReq, err := s.toAppCreateRequest(pbLink)
+	appReq, err := s.toAppCreateRequest(pbLinkCreate)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, err)
 	}
@@ -96,7 +96,7 @@ func (s *Service) GetLink(ctx context.Context, req *connect.Request[pb.GetLinkRe
 
 // UpdateLink updates an existing Link
 func (s *Service) UpdateLink(ctx context.Context, req *connect.Request[pb.UpdateLinkRequest]) (*connect.Response[pb.UpdateLinkResponse], error) {
-	pbLink := req.Msg.GetLink()
+	pbLink := req.Msg
 	if pbLink == nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("link is required"))
 	}
@@ -227,102 +227,4 @@ func (s *Service) ListLinks(ctx context.Context, req *connect.Request[pb.ListLin
 		Links:         pbLinks,
 		NextPageToken: nextPageToken,
 	}), nil
-}
-
-// Helper methods for conversion and error mapping
-
-// toAppCreateRequest converts a protobuf Link to an app CreateLinkRequest
-func (s *Service) toAppCreateRequest(pbLink *pb.Link) (applink.CreateLinkRequest, error) {
-	// Convert optional fields
-	var notes *string
-	var sequenceIndex *int32
-
-	if pbLink.GetNotes() != "" {
-		notesVal := pbLink.GetNotes()
-		notes = &notesVal
-	}
-
-	if pbLink.GetSequenceIndex() != 0 {
-		seqIndex := pbLink.GetSequenceIndex()
-		sequenceIndex = &seqIndex
-	}
-
-	// Convert travel details if present
-	var travelDetails *applink.TravelDetailsRequest
-	if pbLink.GetTravel() != nil {
-		travelDetails = &applink.TravelDetailsRequest{
-			Mode:           modellink.ProtoTravelModeToDomain(pbLink.GetTravel().GetMode()),
-			DurationSec:    pbLink.GetTravel().GetDurationSec(),
-			CostEstimate:   pbLink.GetTravel().GetCostEstimate(),
-			DistanceMeters: pbLink.GetTravel().GetDistanceMeters(),
-		}
-	}
-
-	return applink.CreateLinkRequest{
-		FromLumeID:    pbLink.GetFromLumeId(),
-		ToLumeID:      pbLink.GetToLumeId(),
-		Type:          modellink.ProtoLinkTypeToDomain(pbLink.GetType()),
-		Notes:         notes,
-		SequenceIndex: sequenceIndex,
-		TravelDetails: travelDetails,
-	}, nil
-}
-
-// toAppUpdateRequest converts a protobuf Link to an app UpdateLinkRequest
-func (s *Service) toAppUpdateRequest(pbLink *pb.Link) (applink.UpdateLinkRequest, error) {
-	// Convert optional fields
-	var notes *string
-	var sequenceIndex *int32
-
-	if pbLink.GetNotes() != "" {
-		notesVal := pbLink.GetNotes()
-		notes = &notesVal
-	}
-
-	if pbLink.GetSequenceIndex() != 0 {
-		seqIndex := pbLink.GetSequenceIndex()
-		sequenceIndex = &seqIndex
-	}
-
-	// Convert travel details if present
-	var travelDetails *applink.TravelDetailsRequest
-	if pbLink.GetTravel() != nil {
-		travelDetails = &applink.TravelDetailsRequest{
-			Mode:           modellink.ProtoTravelModeToDomain(pbLink.GetTravel().GetMode()),
-			DurationSec:    pbLink.GetTravel().GetDurationSec(),
-			CostEstimate:   pbLink.GetTravel().GetCostEstimate(),
-			DistanceMeters: pbLink.GetTravel().GetDistanceMeters(),
-		}
-	}
-
-	return applink.UpdateLinkRequest{
-		FromLumeID:    pbLink.GetFromLumeId(),
-		ToLumeID:      pbLink.GetToLumeId(),
-		Type:          modellink.ProtoLinkTypeToDomain(pbLink.GetType()),
-		Notes:         notes,
-		SequenceIndex: sequenceIndex,
-		TravelDetails: travelDetails,
-	}, nil
-}
-
-// mapErrorToConnectError maps domain errors to Connect errors
-func (s *Service) mapErrorToConnectError(err error) error {
-	switch {
-	case errors.Is(err, applink.ErrLinkNotFound):
-		return connect.NewError(connect.CodeNotFound, err)
-	case errors.Is(err, applink.ErrInvalidLinkID):
-		return connect.NewError(connect.CodeInvalidArgument, err)
-	case errors.Is(err, applink.ErrInvalidLumeID):
-		return connect.NewError(connect.CodeInvalidArgument, err)
-	case errors.Is(err, applink.ErrInvalidLinkType):
-		return connect.NewError(connect.CodeInvalidArgument, err)
-	case errors.Is(err, applink.ErrInvalidTravelMode):
-		return connect.NewError(connect.CodeInvalidArgument, err)
-	case errors.Is(err, applink.ErrEmptyNotes):
-		return connect.NewError(connect.CodeInvalidArgument, err)
-	case errors.Is(err, ErrInvalidID):
-		return connect.NewError(connect.CodeInvalidArgument, err)
-	default:
-		return connect.NewError(connect.CodeInternal, err)
-	}
 }

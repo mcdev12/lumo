@@ -1,10 +1,6 @@
 package link
 
 import (
-	"database/sql/driver"
-	"encoding/json"
-
-	"github.com/google/uuid"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	linkpb "github.com/mcdev12/lumo/go/internal/genproto/link/v1"
@@ -144,47 +140,4 @@ func ProtoTravelModeToDomain(pt linkpb.TravelMode) TravelMode {
 	default:
 		return TravelModeUnspecified
 	}
-}
-
-// JSONTravelDetails is a helper for handling JSONB travel details in the database
-type JSONTravelDetails TravelDetails
-
-// Value implements the driver.Valuer interface for JSONTravelDetails
-func (j JSONTravelDetails) Value() (driver.Value, error) {
-	return json.Marshal(j)
-}
-
-// Scan implements the sql.Scanner interface for JSONTravelDetails
-func (j *JSONTravelDetails) Scan(value interface{}) error {
-	if value == nil {
-		return nil
-	}
-
-	bytes, ok := value.([]byte)
-	if !ok {
-		return json.Unmarshal([]byte(value.(string)), j)
-	}
-	return json.Unmarshal(bytes, j)
-}
-
-// ParseUUID safely parses a string to UUID
-func ParseUUID(id string) (uuid.UUID, error) {
-	return uuid.Parse(id)
-}
-
-// ValidateTravelDetails validates travel details
-func ValidateTravelDetails(td *TravelDetails) bool {
-	if td == nil {
-		return true // Optional field is valid when nil
-	}
-
-	// Basic validation rules
-	if td.DurationSec < 0 {
-		return false
-	}
-	if td.DistanceMeters < 0 {
-		return false
-	}
-
-	return true
 }

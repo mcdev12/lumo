@@ -24,7 +24,7 @@ message Link {
   string notes = 6;
 
   // Optional hint for rendering order in lists/timelines
-  int32  sequence_index = 7;
+  int32 sequence_index = 7;
 
   // Audit timestamps
   google.protobuf.Timestamp created_at = 8;
@@ -32,6 +32,7 @@ message Link {
 }
 
 // Describes the semantic relationship between two Lumés
+// TODO think of more
 enum LinkType {
   LINK_TYPE_UNSPECIFIED = 0;
   LINK_TYPE_TRAVEL = 1; // movement from A → B

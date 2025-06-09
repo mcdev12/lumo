@@ -65,9 +65,11 @@ func createTestLumeDomain() *lume.Lume {
 
 // Helper function to create a test sqlc.Lume database model
 func createTestLumeSqlc() sqlc.Lume {
-	lumoID := uuid.New()
-	lumeID := uuid.New()
-	now := time.Now()
+	// Use the same UUIDs as the domain model for consistent testing
+	domainLume := createTestLumeDomain()
+	lumoID := uuid.MustParse(domainLume.LumoID)
+	lumeID := uuid.MustParse(domainLume.LumeID)
+	now := domainLume.CreatedAt
 
 	return sqlc.Lume{
 		ID:           1,
@@ -103,8 +105,20 @@ func (s *RepositoryTestSuite) TestCreateLume() {
 	// Assert
 	s.NoError(err)
 	s.NotNil(result)
-	s.Equal(domainLume.Name, result.Name)
+	s.Equal(domainLume.ID, result.ID)
+	s.Equal(domainLume.LumeID, result.LumeID)
+	s.Equal(domainLume.LumoID, result.LumoID)
 	s.Equal(domainLume.Type, result.Type)
+	s.Equal(domainLume.Name, result.Name)
+	s.Equal(domainLume.Description, result.Description)
+	s.Equal(domainLume.Latitude, result.Latitude)
+	s.Equal(domainLume.Longitude, result.Longitude)
+	s.Equal(domainLume.Address, result.Address)
+	s.Equal(domainLume.BookingLink, result.BookingLink)
+	s.Equal(domainLume.Images, result.Images)
+	s.Equal(domainLume.CategoryTags, result.CategoryTags)
+	s.Equal(domainLume.CreatedAt.Unix(), result.CreatedAt.Unix())
+	s.Equal(domainLume.UpdatedAt.Unix(), result.UpdatedAt.Unix())
 	s.mockQuerier.AssertExpectations(s.T())
 }
 
@@ -145,7 +159,19 @@ func (s *RepositoryTestSuite) TestGetLumeByID() {
 	s.NoError(err)
 	s.NotNil(result)
 	s.Equal(id, result.ID)
+	s.Equal(sqlcLume.LumeID.String(), result.LumeID)
+	s.Equal(sqlcLume.LumoID.String(), result.LumoID)
+	s.Equal(lume.LumeType(sqlcLume.Type), result.Type)
 	s.Equal(sqlcLume.Name, result.Name)
+	s.Equal(sqlcLume.Description.String, result.Description)
+	s.Equal(sqlcLume.Latitude.Float64, *result.Latitude)
+	s.Equal(sqlcLume.Longitude.Float64, *result.Longitude)
+	s.Equal(sqlcLume.Address.String, *result.Address)
+	s.Equal(sqlcLume.BookingLink.String, *result.BookingLink)
+	s.Equal(sqlcLume.Images, result.Images)
+	s.Equal(sqlcLume.CategoryTags, result.CategoryTags)
+	s.Equal(sqlcLume.CreatedAt.Unix(), result.CreatedAt.Unix())
+	s.Equal(sqlcLume.UpdatedAt.Unix(), result.UpdatedAt.Unix())
 	s.mockQuerier.AssertExpectations(s.T())
 }
 
@@ -173,10 +199,10 @@ func (s *RepositoryTestSuite) TestGetLumeByIDError() {
 func (s *RepositoryTestSuite) TestGetLumeByLumeID() {
 	// Arrange
 	ctx := context.Background()
-	lumeID := uuid.New()
+	domainLume := createTestLumeDomain()
+	lumeID := uuid.MustParse(domainLume.LumeID)
 	lumeIDStr := lumeID.String()
 	sqlcLume := createTestLumeSqlc()
-	sqlcLume.LumeID = lumeID
 
 	// Set up expectations
 	s.mockQuerier.On("GetLumeByLumeID", mock.Anything, lumeID).Return(sqlcLume, nil)
@@ -187,7 +213,20 @@ func (s *RepositoryTestSuite) TestGetLumeByLumeID() {
 	// Assert
 	s.NoError(err)
 	s.NotNil(result)
+	s.Equal(sqlcLume.ID, result.ID)
 	s.Equal(lumeIDStr, result.LumeID)
+	s.Equal(sqlcLume.LumoID.String(), result.LumoID)
+	s.Equal(lume.LumeType(sqlcLume.Type), result.Type)
+	s.Equal(sqlcLume.Name, result.Name)
+	s.Equal(sqlcLume.Description.String, result.Description)
+	s.Equal(sqlcLume.Latitude.Float64, *result.Latitude)
+	s.Equal(sqlcLume.Longitude.Float64, *result.Longitude)
+	s.Equal(sqlcLume.Address.String, *result.Address)
+	s.Equal(sqlcLume.BookingLink.String, *result.BookingLink)
+	s.Equal(sqlcLume.Images, result.Images)
+	s.Equal(sqlcLume.CategoryTags, result.CategoryTags)
+	s.Equal(sqlcLume.CreatedAt.Unix(), result.CreatedAt.Unix())
+	s.Equal(sqlcLume.UpdatedAt.Unix(), result.UpdatedAt.Unix())
 	s.mockQuerier.AssertExpectations(s.T())
 }
 
@@ -210,7 +249,8 @@ func (s *RepositoryTestSuite) TestGetLumeByLumeIDInvalidUUID() {
 func (s *RepositoryTestSuite) TestGetLumeByLumeIDDatabaseError() {
 	// Arrange
 	ctx := context.Background()
-	lumeID := uuid.New()
+	domainLume := createTestLumeDomain()
+	lumeID := uuid.MustParse(domainLume.LumeID)
 	lumeIDStr := lumeID.String()
 	expectedErr := errors.New("database error")
 
@@ -231,7 +271,8 @@ func (s *RepositoryTestSuite) TestGetLumeByLumeIDDatabaseError() {
 func (s *RepositoryTestSuite) TestListLumesByLumoID() {
 	// Arrange
 	ctx := context.Background()
-	lumoID := uuid.New()
+	domainLume := createTestLumeDomain()
+	lumoID := uuid.MustParse(domainLume.LumoID)
 	lumoIDStr := lumoID.String()
 	limit := int32(10)
 	offset := int32(0)
@@ -278,7 +319,8 @@ func (s *RepositoryTestSuite) TestListLumesByLumoIDInvalidUUID() {
 func (s *RepositoryTestSuite) TestListLumesByLumoIDDatabaseError() {
 	// Arrange
 	ctx := context.Background()
-	lumoID := uuid.New()
+	domainLume := createTestLumeDomain()
+	lumoID := uuid.MustParse(domainLume.LumoID)
 	lumoIDStr := lumoID.String()
 	limit := int32(10)
 	offset := int32(0)
@@ -303,7 +345,8 @@ func (s *RepositoryTestSuite) TestListLumesByLumoIDDatabaseError() {
 func (s *RepositoryTestSuite) TestListLumesByType() {
 	// Arrange
 	ctx := context.Background()
-	lumoID := uuid.New()
+	domainLume := createTestLumeDomain()
+	lumoID := uuid.MustParse(domainLume.LumoID)
 	lumoIDStr := lumoID.String()
 	lumeType := lume.LumeTypeCity
 	limit := int32(10)
@@ -334,7 +377,8 @@ func (s *RepositoryTestSuite) TestListLumesByType() {
 func (s *RepositoryTestSuite) TestSearchLumesByLocation() {
 	// Arrange
 	ctx := context.Background()
-	lumoID := uuid.New()
+	domainLume := createTestLumeDomain()
+	lumoID := uuid.MustParse(domainLume.LumoID)
 	lumoIDStr := lumoID.String()
 	minLat := 40.0
 	maxLat := 41.0
@@ -386,8 +430,20 @@ func (s *RepositoryTestSuite) TestUpdateLume() {
 	// Assert
 	s.NoError(err)
 	s.NotNil(result)
-	s.Equal(domainLume.Name, result.Name)
+	s.Equal(domainLume.ID, result.ID)
+	s.Equal(domainLume.LumeID, result.LumeID)
+	s.Equal(domainLume.LumoID, result.LumoID)
 	s.Equal(domainLume.Type, result.Type)
+	s.Equal(domainLume.Name, result.Name)
+	s.Equal(domainLume.Description, result.Description)
+	s.Equal(domainLume.Latitude, result.Latitude)
+	s.Equal(domainLume.Longitude, result.Longitude)
+	s.Equal(domainLume.Address, result.Address)
+	s.Equal(domainLume.BookingLink, result.BookingLink)
+	s.Equal(domainLume.Images, result.Images)
+	s.Equal(domainLume.CategoryTags, result.CategoryTags)
+	s.Equal(domainLume.CreatedAt.Unix(), result.CreatedAt.Unix())
+	s.Equal(domainLume.UpdatedAt.Unix(), result.UpdatedAt.Unix())
 	s.mockQuerier.AssertExpectations(s.T())
 }
 
@@ -412,7 +468,8 @@ func (s *RepositoryTestSuite) TestDeleteLume() {
 func (s *RepositoryTestSuite) TestDeleteLumeByLumeID() {
 	// Arrange
 	ctx := context.Background()
-	lumeID := uuid.New()
+	domainLume := createTestLumeDomain()
+	lumeID := uuid.MustParse(domainLume.LumeID)
 	lumeIDStr := lumeID.String()
 
 	// Set up expectations
@@ -430,7 +487,8 @@ func (s *RepositoryTestSuite) TestDeleteLumeByLumeID() {
 func (s *RepositoryTestSuite) TestCountLumesByLumo() {
 	// Arrange
 	ctx := context.Background()
-	lumoID := uuid.New()
+	domainLume := createTestLumeDomain()
+	lumoID := uuid.MustParse(domainLume.LumoID)
 	lumoIDStr := lumoID.String()
 	expectedCount := int64(10)
 

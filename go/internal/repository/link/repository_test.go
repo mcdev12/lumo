@@ -67,10 +67,12 @@ func createTestLinkDomain() *link.Link {
 
 // Helper function to create a test sqlc.Link database model
 func createTestLinkSqlc() sqlc.Link {
-	fromLumeID := uuid.New()
-	toLumeID := uuid.New()
-	linkID := uuid.New()
-	now := time.Now()
+	// Use the same UUIDs as the domain model for consistent testing
+	domainLink := createTestLinkDomain()
+	fromLumeID := uuid.MustParse(domainLink.FromLumeID)
+	toLumeID := uuid.MustParse(domainLink.ToLumeID)
+	linkID := uuid.MustParse(domainLink.LinkID)
+	now := domainLink.CreatedAt
 	notes := "Test notes"
 	sequenceIndex := int32(1)
 
@@ -112,8 +114,19 @@ func (s *RepositoryTestSuite) TestCreateLink() {
 	// Assert
 	s.NoError(err)
 	s.NotNil(result)
+	s.Equal(domainLink.ID, result.ID)
 	s.Equal(domainLink.LinkID, result.LinkID)
+	s.Equal(domainLink.FromLumeID, result.FromLumeID)
+	s.Equal(domainLink.ToLumeID, result.ToLumeID)
 	s.Equal(domainLink.Type, result.Type)
+	s.Equal(domainLink.Notes, result.Notes)
+	s.Equal(domainLink.SequenceIndex, result.SequenceIndex)
+	s.Equal(domainLink.Travel.Mode, result.Travel.Mode)
+	s.Equal(domainLink.Travel.DurationSec, result.Travel.DurationSec)
+	s.Equal(domainLink.Travel.CostEstimate, result.Travel.CostEstimate)
+	s.Equal(domainLink.Travel.DistanceMeters, result.Travel.DistanceMeters)
+	s.Equal(domainLink.CreatedAt.Unix(), result.CreatedAt.Unix())
+	s.Equal(domainLink.UpdatedAt.Unix(), result.UpdatedAt.Unix())
 	s.mockQuerier.AssertExpectations(s.T())
 }
 
@@ -155,6 +168,17 @@ func (s *RepositoryTestSuite) TestGetLinkByID() {
 	s.NotNil(result)
 	s.Equal(id, result.ID)
 	s.Equal(sqlcLink.LinkID.String(), result.LinkID)
+	s.Equal(sqlcLink.FromLumeID.String(), result.FromLumeID)
+	s.Equal(sqlcLink.ToLumeID.String(), result.ToLumeID)
+	s.Equal(link.LinkType(sqlcLink.LinkType), result.Type)
+	s.Equal(sqlcLink.Notes.String, *result.Notes)
+	s.Equal(sqlcLink.SequenceIndex.Int32, *result.SequenceIndex)
+	s.Equal(link.TravelModeFlight, result.Travel.Mode)
+	s.Equal(int32(3600), result.Travel.DurationSec)
+	s.Equal(100.50, result.Travel.CostEstimate)
+	s.Equal(float64(500000), result.Travel.DistanceMeters)
+	s.Equal(sqlcLink.CreatedAt.Unix(), result.CreatedAt.Unix())
+	s.Equal(sqlcLink.UpdatedAt.Unix(), result.UpdatedAt.Unix())
 	s.mockQuerier.AssertExpectations(s.T())
 }
 
@@ -182,10 +206,10 @@ func (s *RepositoryTestSuite) TestGetLinkByIDError() {
 func (s *RepositoryTestSuite) TestGetLinkByLinkID() {
 	// Arrange
 	ctx := context.Background()
-	linkID := uuid.New()
+	domainLink := createTestLinkDomain()
+	linkID := uuid.MustParse(domainLink.LinkID)
 	linkIDStr := linkID.String()
 	sqlcLink := createTestLinkSqlc()
-	sqlcLink.LinkID = linkID
 
 	// Set up expectations
 	s.mockQuerier.On("GetLinkByLinkID", mock.Anything, linkID).Return(sqlcLink, nil)
@@ -196,7 +220,19 @@ func (s *RepositoryTestSuite) TestGetLinkByLinkID() {
 	// Assert
 	s.NoError(err)
 	s.NotNil(result)
+	s.Equal(sqlcLink.ID, result.ID)
 	s.Equal(linkIDStr, result.LinkID)
+	s.Equal(sqlcLink.FromLumeID.String(), result.FromLumeID)
+	s.Equal(sqlcLink.ToLumeID.String(), result.ToLumeID)
+	s.Equal(link.LinkType(sqlcLink.LinkType), result.Type)
+	s.Equal(sqlcLink.Notes.String, *result.Notes)
+	s.Equal(sqlcLink.SequenceIndex.Int32, *result.SequenceIndex)
+	s.Equal(link.TravelModeFlight, result.Travel.Mode)
+	s.Equal(int32(3600), result.Travel.DurationSec)
+	s.Equal(100.50, result.Travel.CostEstimate)
+	s.Equal(float64(500000), result.Travel.DistanceMeters)
+	s.Equal(sqlcLink.CreatedAt.Unix(), result.CreatedAt.Unix())
+	s.Equal(sqlcLink.UpdatedAt.Unix(), result.UpdatedAt.Unix())
 	s.mockQuerier.AssertExpectations(s.T())
 }
 
@@ -219,7 +255,8 @@ func (s *RepositoryTestSuite) TestGetLinkByLinkIDInvalidUUID() {
 func (s *RepositoryTestSuite) TestGetLinkByLinkIDDatabaseError() {
 	// Arrange
 	ctx := context.Background()
-	linkID := uuid.New()
+	domainLink := createTestLinkDomain()
+	linkID := uuid.MustParse(domainLink.LinkID)
 	linkIDStr := linkID.String()
 	expectedErr := errors.New("database error")
 
@@ -240,7 +277,8 @@ func (s *RepositoryTestSuite) TestGetLinkByLinkIDDatabaseError() {
 func (s *RepositoryTestSuite) TestListLinksByFromLumeID() {
 	// Arrange
 	ctx := context.Background()
-	fromLumeID := uuid.New()
+	domainLink := createTestLinkDomain()
+	fromLumeID := uuid.MustParse(domainLink.FromLumeID)
 	fromLumeIDStr := fromLumeID.String()
 	limit := int32(10)
 	offset := int32(0)
@@ -270,7 +308,8 @@ func (s *RepositoryTestSuite) TestListLinksByFromLumeID() {
 func (s *RepositoryTestSuite) TestListLinksByToLumeID() {
 	// Arrange
 	ctx := context.Background()
-	toLumeID := uuid.New()
+	domainLink := createTestLinkDomain()
+	toLumeID := uuid.MustParse(domainLink.ToLumeID)
 	toLumeIDStr := toLumeID.String()
 	limit := int32(10)
 	offset := int32(0)
@@ -312,8 +351,19 @@ func (s *RepositoryTestSuite) TestUpdateLink() {
 	// Assert
 	s.NoError(err)
 	s.NotNil(result)
+	s.Equal(domainLink.ID, result.ID)
 	s.Equal(domainLink.LinkID, result.LinkID)
+	s.Equal(domainLink.FromLumeID, result.FromLumeID)
+	s.Equal(domainLink.ToLumeID, result.ToLumeID)
 	s.Equal(domainLink.Type, result.Type)
+	s.Equal(domainLink.Notes, result.Notes)
+	s.Equal(domainLink.SequenceIndex, result.SequenceIndex)
+	s.Equal(domainLink.Travel.Mode, result.Travel.Mode)
+	s.Equal(domainLink.Travel.DurationSec, result.Travel.DurationSec)
+	s.Equal(domainLink.Travel.CostEstimate, result.Travel.CostEstimate)
+	s.Equal(domainLink.Travel.DistanceMeters, result.Travel.DistanceMeters)
+	s.Equal(domainLink.CreatedAt.Unix(), result.CreatedAt.Unix())
+	s.Equal(domainLink.UpdatedAt.Unix(), result.UpdatedAt.Unix())
 	s.mockQuerier.AssertExpectations(s.T())
 }
 
@@ -338,7 +388,8 @@ func (s *RepositoryTestSuite) TestDeleteLink() {
 func (s *RepositoryTestSuite) TestDeleteLinkByLinkID() {
 	// Arrange
 	ctx := context.Background()
-	linkID := uuid.New()
+	domainLink := createTestLinkDomain()
+	linkID := uuid.MustParse(domainLink.LinkID)
 	linkIDStr := linkID.String()
 
 	// Set up expectations
@@ -356,7 +407,8 @@ func (s *RepositoryTestSuite) TestDeleteLinkByLinkID() {
 func (s *RepositoryTestSuite) TestCountLinksByLumeID() {
 	// Arrange
 	ctx := context.Background()
-	lumeID := uuid.New()
+	domainLink := createTestLinkDomain()
+	lumeID := uuid.MustParse(domainLink.FromLumeID)
 	lumeIDStr := lumeID.String()
 	expectedCount := int64(10)
 

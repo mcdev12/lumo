@@ -79,23 +79,6 @@ func NewLink(fromLumeID, toLumeID string, linkType LinkType) *Link {
 	}
 }
 
-// IsValid performs basic validation on the Link
-func (l *Link) IsValid() bool {
-	if l.LinkID == "" {
-		return false
-	}
-	if l.FromLumeID == "" {
-		return false
-	}
-	if l.ToLumeID == "" {
-		return false
-	}
-	if l.Type == "" || l.Type == LinkTypeUnspecified {
-		return false
-	}
-	return true
-}
-
 // HasTravelDetails returns true if the Link has travel details
 func (l *Link) HasTravelDetails() bool {
 	return l.Travel != nil
