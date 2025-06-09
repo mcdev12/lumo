@@ -10,5 +10,9 @@ plugins:
     out: go/internal/genproto
     opt:
       - paths=source_relative
+  # Protobuf-ES: emits TS message & enum types
+  - remote: buf.build/bufbuild/es:v2.5.2
+    out: js/web/src/genproto
+    include_imports: true
 inputs:
   - directory: protobuf
