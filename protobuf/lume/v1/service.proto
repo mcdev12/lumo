@@ -5,6 +5,7 @@ package lume.v1;
 
 import "buf/validate/validate.proto";
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/field_mask.proto";
 import "lume/v1/lume.proto";
 
 option go_package = "github.com/mcdev12/lumo/go/internal/genproto/lume/v1;lumev1";
@@ -45,8 +46,8 @@ message CreateLumeRequest {
   double longitude = 7 [
     (buf.validate.field).double.gte = -180,
     (buf.validate.field).double.lte = 180
-  ]
-  ;
+  ];
+
   string address = 8;
 
   string description = 9;
@@ -56,7 +57,7 @@ message CreateLumeRequest {
   repeated string category_tags = 11;
 
   string booking_link = 12 [
-    (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE,
+    (buf.validate.field).ignore = IGNORE_IF_UNPOPULATED,
     (buf.validate.field).string.uri = true
   ];
 }
@@ -97,7 +98,53 @@ message ListLumesResponse {
 
 // Request to update an existing Lume
 message UpdateLumeRequest {
-  Lume lume = 1;
+  // TODO you will need to update field mask in the app layer when adding a new field to update
+  // Field mask to specify which fields to update.
+  // If not provided or empty, all fields in the request will be updated.
+  // To update only specific fields, include their paths in the mask.
+  // For example, to update only the name and description:
+  // { "update_mask": { "paths": ["name", "description"] }, ... }
+  google.protobuf.FieldMask update_mask = 1;
+
+  string lume_id = 2 [
+    (buf.validate.field).string.uuid = true
+  ];
+
+  optional LumeType type = 3 [
+    (buf.validate.field).ignore = IGNORE_IF_UNPOPULATED,
+    (buf.validate.field).enum = {not_in: [0]},
+    (buf.validate.field).enum.defined_only = true
+  ];
+
+  string name = 4 [
+    (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE,
+    (buf.validate.field).string.min_len = 1
+  ];
+
+  google.protobuf.Timestamp date_start = 5;
+  google.protobuf.Timestamp date_end = 6;
+
+  double latitude = 7 [
+    (buf.validate.field).double.gte = -90,
+    (buf.validate.field).double.lte = 90
+  ];
+  double longitude = 8 [
+    (buf.validate.field).double.gte = -180,
+    (buf.validate.field).double.lte = 180]
+  ;
+
+  string address = 9;
+
+  string description = 10;
+
+  repeated string images = 11;
+
+  repeated string category_tags = 12;
+
+  string booking_link = 13 [
+    (buf.validate.field).ignore = IGNORE_IF_UNPOPULATED,
+    (buf.validate.field).string.uri = true]
+  ;
 }
 
 // Response after updating a Lume

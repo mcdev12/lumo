@@ -9,7 +9,7 @@ import (
 // CreateLumeRequest represents the business layer's create request
 type CreateLumeRequest struct {
 	LumoID      string // Parent Lumo UUID (required)
-	Label       string
+	Name        string
 	Type        modellume.LumeType
 	Description string
 	Metadata    map[string]interface{}
@@ -26,7 +26,7 @@ type CreateLumeRequest struct {
 
 // UpdateLumeRequest represents the business layer's update request
 type UpdateLumeRequest struct {
-	Label       string
+	Name        string
 	Type        modellume.LumeType
 	Description string
 	Metadata    map[string]interface{}
@@ -39,6 +39,8 @@ type UpdateLumeRequest struct {
 	Images       []string
 	CategoryTags []string
 	BookingLink  *string
+	// Fields to update (from field mask)
+	UpdateFields []string
 }
 
 // ListLumesRequest represents pagination parameters

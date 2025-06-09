@@ -154,18 +154,18 @@ func (s *Service) ListLumes(ctx context.Context, req *connect.Request[pb.ListLum
 
 // UpdateLume updates an existing Lume
 func (s *Service) UpdateLume(ctx context.Context, req *connect.Request[pb.UpdateLumeRequest]) (*connect.Response[pb.UpdateLumeResponse], error) {
-	pbLume := req.Msg.GetLume()
-	if pbLume == nil {
+	pbUpdateLumeRequest := req.Msg
+	if pbUpdateLumeRequest == nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("lume is required"))
 	}
 
-	appReq, err := s.toAppUpdateRequest(pbLume)
+	appReq, err := s.toAppUpdateRequest(pbUpdateLumeRequest)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, err)
 	}
 
 	// Use LumeId (UUID) for updates, not internal ID
-	domainLume, err := s.app.UpdateLumeByLumeID(ctx, pbLume.GetLumeId(), appReq)
+	domainLume, err := s.app.UpdateLumeByLumeID(ctx, pbUpdateLumeRequest.GetLumeId(), appReq)
 	if err != nil {
 		return nil, mapErrorToConnectError(err)
 	}

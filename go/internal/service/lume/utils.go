@@ -17,7 +17,7 @@ func domainToProto(domainLume *modellume.Lume) *lumepb.Lume {
 	proto := &lumepb.Lume{
 		LumeId:       domainLume.LumeID,
 		LumoId:       domainLume.LumoID,
-		Type:         DomainLumeTypeToProto(domainLume.Type),
+		Type:         domainLumeTypeToProto(domainLume.Type),
 		Name:         domainLume.Name,
 		Description:  domainLume.Description,
 		Images:       domainLume.Images,
@@ -91,7 +91,7 @@ func (s *Service) toAppCreateRequest(pbLume *lumepb.CreateLumeRequest) (applume.
 
 	return applume.CreateLumeRequest{
 		LumoID:       pbLume.GetLumoId(),
-		Label:        pbLume.GetName(),
+		Name:         pbLume.GetName(),
 		Type:         modellume.LumeType(pbLume.GetType().String()),
 		Description:  pbLume.GetDescription(),
 		DateStart:    dateStart,
@@ -106,7 +106,12 @@ func (s *Service) toAppCreateRequest(pbLume *lumepb.CreateLumeRequest) (applume.
 }
 
 // toAppUpdateRequest converts a protobuf Lume to an app UpdateLumeRequest
-func (s *Service) toAppUpdateRequest(pbLume *lumepb.Lume) (applume.UpdateLumeRequest, error) {
+func (s *Service) toAppUpdateRequest(pbLume *lumepb.UpdateLumeRequest) (applume.UpdateLumeRequest, error) {
+	var lumeType modellume.LumeType
+	if pbLume.Type != nil {
+		lumeType = modellume.LumeType(pbLume.GetType().String())
+	}
+
 	// Convert timestamps to time.Time pointers
 	var dateStart, dateEnd *time.Time
 	if pbLume.GetDateStart() != nil {
@@ -139,9 +144,18 @@ func (s *Service) toAppUpdateRequest(pbLume *lumepb.Lume) (applume.UpdateLumeReq
 		bookingLink = &link
 	}
 
+	// TODO: Once the protobuf code is regenerated, uncomment this code to extract field paths from the update mask
+	updateFields := make([]string, 0)
+	if pbLume.GetUpdateMask() != nil {
+		updateFields = pbLume.GetUpdateMask().GetPaths()
+	}
+
+	// For now, use an empty slice which will cause all fields to be updated (backward compatibility)
+	//updateFields := make([]string, 0)
+
 	return applume.UpdateLumeRequest{
-		Label:        pbLume.GetName(),
-		Type:         modellume.LumeType(pbLume.GetType().String()),
+		Name:         pbLume.GetName(),
+		Type:         lumeType,
 		Description:  pbLume.GetDescription(),
 		DateStart:    dateStart,
 		DateEnd:      dateEnd,
@@ -151,87 +165,12 @@ func (s *Service) toAppUpdateRequest(pbLume *lumepb.Lume) (applume.UpdateLumeReq
 		Images:       pbLume.GetImages(),
 		CategoryTags: pbLume.GetCategoryTags(),
 		BookingLink:  bookingLink,
+		UpdateFields: updateFields,
 	}, nil
 }
 
-// toPbLume converts a domain Lume to a protobuf Lume
-//func toPbLume(domainLume *modellume.Lume) (*lumepb.Lume, error) {
-//	// Convert timestamps
-//	var dateStart, dateEnd *timestamppb.Timestamp
-//	if domainLume.DateStart != nil {
-//		dateStart = timestamppb.New(*domainLume.DateStart)
-//	}
-//	if domainLume.DateEnd != nil {
-//		dateEnd = timestamppb.New(*domainLume.DateEnd)
-//	}
-//
-//	// Convert optional fields
-//	var latitude, longitude float64
-//	var address, bookingLink string
-//
-//	if domainLume.Latitude != nil {
-//		latitude = *domainLume.Latitude
-//	}
-//	if domainLume.Longitude != nil {
-//		longitude = *domainLume.Longitude
-//	}
-//	if domainLume.Address != nil {
-//		address = *domainLume.Address
-//	}
-//	if domainLume.BookingLink != nil {
-//		bookingLink = *domainLume.BookingLink
-//	}
-//
-//	return &lumepb.Lume{
-//		LumeId:       domainLume.LumeID,
-//		LumoId:       domainLume.LumoID,
-//		Type:         toPbLumeType(domainLume.Type),
-//		Name:         domainLume.Name,
-//		DateStart:    dateStart,
-//		DateEnd:      dateEnd,
-//		Latitude:     latitude,
-//		Longitude:    longitude,
-//		Address:      address,
-//		Description:  domainLume.Description,
-//		Images:       domainLume.Images,
-//		CategoryTags: domainLume.CategoryTags,
-//		BookingLink:  bookingLink,
-//		CreatedAt:    timestamppb.New(domainLume.CreatedAt),
-//		UpdatedAt:    timestamppb.New(domainLume.UpdatedAt),
-//	}, nil
-//}
-//
-//// toPbLumeType converts a domain LumeType to a protobuf LumeType
-//func toPbLumeType(domainType modellume.LumeType) lumepb.LumeType {
-//	switch domainType {
-//	case modellume.LumeTypeUnspecified:
-//		return lumepb.LumeType_LUME_TYPE_UNSPECIFIED
-//	case modellume.LumeTypeCity:
-//		return lumepb.LumeType_LUME_TYPE_CITY
-//	case modellume.LumeTypeAttraction:
-//		return lumepb.LumeType_LUME_TYPE_ATTRACTION
-//	case modellume.LumeTypeAccommodation:
-//		return lumepb.LumeType_LUME_TYPE_ACCOMMODATION
-//	case modellume.LumeTypeRestaurant:
-//		return lumepb.LumeType_LUME_TYPE_RESTAURANT
-//	case modellume.LumeTypeTransportHub:
-//		return lumepb.LumeType_LUME_TYPE_TRANSPORT_HUB
-//	case modellume.LumeTypeActivity:
-//		return lumepb.LumeType_LUME_TYPE_ACTIVITY
-//	case modellume.LumeTypeShopping:
-//		return lumepb.LumeType_LUME_TYPE_SHOPPING
-//	case modellume.LumeTypeEntertainment:
-//		return lumepb.LumeType_LUME_TYPE_ENTERTAINMENT
-//	case modellume.LumeTypeCustom:
-//		return lumepb.LumeType_LUME_TYPE_CUSTOM
-//	default:
-//		log.Printf("warning: toPbLumeType saw unexpected domain type %v, defaulting to UNSPECIFIED", domainType)
-//		return lumepb.LumeType_LUME_TYPE_UNSPECIFIED
-//	}
-//}
-
-// Domain LumeType to Proto LumeType conversion
-func DomainLumeTypeToProto(dt modellume.LumeType) lumepb.LumeType {
+// domainLumeTypeToProto LumeType conversion
+func domainLumeTypeToProto(dt modellume.LumeType) lumepb.LumeType {
 	switch dt {
 	case modellume.LumeTypeCity:
 		return lumepb.LumeType_LUME_TYPE_CITY
@@ -267,7 +206,7 @@ func mapErrorToConnectError(err error) error {
 		return connect.NewError(connect.CodeInvalidArgument, err)
 	case errors.Is(err, applume.ErrInvalidLumeType):
 		return connect.NewError(connect.CodeInvalidArgument, err)
-	case errors.Is(err, applume.ErrEmptyLabel):
+	case errors.Is(err, applume.ErrEmptyName):
 		return connect.NewError(connect.CodeInvalidArgument, err)
 	case errors.Is(err, applume.ErrInvalidMetadata):
 		return connect.NewError(connect.CodeInvalidArgument, err)

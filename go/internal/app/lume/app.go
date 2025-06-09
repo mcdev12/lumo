@@ -16,7 +16,7 @@ var (
 	ErrInvalidLumoID   = errors.New("invalid lumo ID")
 	ErrInvalidLumeID   = errors.New("invalid lume ID")
 	ErrInvalidLumeType = errors.New("invalid lume type")
-	ErrEmptyLabel      = errors.New("label cannot be empty")
+	ErrEmptyName       = errors.New("name cannot be empty")
 	ErrInvalidMetadata = errors.New("invalid metadata")
 )
 
@@ -189,7 +189,7 @@ func (a *App) toDomainModelForCreate(req CreateLumeRequest) (*modellume.Lume, er
 		LumeID:       uuid.New().String(), // Generate new UUID
 		LumoID:       req.LumoID,
 		Type:         req.Type,
-		Name:         req.Label,
+		Name:         req.Name,
 		Description:  req.Description,
 		DateStart:    req.DateStart,
 		DateEnd:      req.DateEnd,
@@ -216,24 +216,62 @@ func (a *App) toDomainModelForCreate(req CreateLumeRequest) (*modellume.Lume, er
 
 // updateDomainModel updates an existing domain model with values from the update request
 func (a *App) updateDomainModel(existingLume *modellume.Lume, req UpdateLumeRequest) *modellume.Lume {
-	// Update fields
-	existingLume.Name = req.Label
-	existingLume.Type = req.Type
-	existingLume.Description = req.Description
-	existingLume.DateStart = req.DateStart
-	existingLume.DateEnd = req.DateEnd
-	existingLume.Latitude = req.Latitude
-	existingLume.Longitude = req.Longitude
-	existingLume.Address = req.Address
-	existingLume.BookingLink = req.BookingLink
+	// Always update the UpdatedAt timestamp
 	existingLume.UpdatedAt = time.Now()
 
-	// Update arrays if provided
-	if req.Images != nil {
-		existingLume.Images = req.Images
+	// If UpdateFields is empty, update all fields (backward compatibility)
+	if len(req.UpdateFields) == 0 {
+		existingLume.Name = req.Name
+		existingLume.Type = req.Type
+		existingLume.Description = req.Description
+		existingLume.DateStart = req.DateStart
+		existingLume.DateEnd = req.DateEnd
+		existingLume.Latitude = req.Latitude
+		existingLume.Longitude = req.Longitude
+		existingLume.Address = req.Address
+		existingLume.BookingLink = req.BookingLink
+
+		// Update arrays if provided
+		if req.Images != nil {
+			existingLume.Images = req.Images
+		}
+		if req.CategoryTags != nil {
+			existingLume.CategoryTags = req.CategoryTags
+		}
+
+		return existingLume
 	}
-	if req.CategoryTags != nil {
-		existingLume.CategoryTags = req.CategoryTags
+
+	// Otherwise, only update fields specified in UpdateFields
+	for _, field := range req.UpdateFields {
+		switch field {
+		case "name":
+			existingLume.Name = req.Name
+		case "type":
+			existingLume.Type = req.Type
+		case "description":
+			existingLume.Description = req.Description
+		case "date_start":
+			existingLume.DateStart = req.DateStart
+		case "date_end":
+			existingLume.DateEnd = req.DateEnd
+		case "latitude":
+			existingLume.Latitude = req.Latitude
+		case "longitude":
+			existingLume.Longitude = req.Longitude
+		case "address":
+			existingLume.Address = req.Address
+		case "booking_link":
+			existingLume.BookingLink = req.BookingLink
+		case "images":
+			if req.Images != nil {
+				existingLume.Images = req.Images
+			}
+		case "category_tags":
+			if req.CategoryTags != nil {
+				existingLume.CategoryTags = req.CategoryTags
+			}
+		}
 	}
 
 	return existingLume
