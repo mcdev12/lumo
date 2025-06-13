@@ -35,3 +35,5 @@ go.work.sum
 
 /go/internal/genproto
 third_party/
+
+CLAUDE.md
