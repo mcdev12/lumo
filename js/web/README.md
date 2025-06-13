@@ -1,76 +1,36 @@
-# Lumo Frontend
-
-This is a simple React frontend for the Lumo application. It connects to the Lumo backend using Connect RPC (a modern gRPC-web compatible protocol) to create and display a sample link between Lumes.
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
 
-### Prerequisites
-
-- Node.js (v14 or later)
-- Yarn package manager
-- Lumo backend running (default: http://localhost:8080)
-
-### Installation
-
-1. Install dependencies:
+First, run the development server:
 
 ```bash
-yarn install
+npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
 ```
 
-### Running the Application
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-Start the development server:
+You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-```bash
-yarn start
-```
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-This will run the app in development mode. Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+## Learn More
 
-## Connecting to the Backend
+To learn more about Next.js, take a look at the following resources:
 
-The frontend is configured to connect to the backend at `http://localhost:8080`. If your backend is running on a different URL, you'll need to update the `baseUrl` in `src/App.tsx`:
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
-```typescript
-const transport = createConnectTransport({
-  baseUrl: "http://localhost:8080", // Change this to your backend URL
-});
-```
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-## Features
+## Deploy on Vercel
 
-- Creates and displays a sample link between Lumes
-- Shows detailed information about the link, including:
-  - Source and destination Lume IDs
-  - Link type
-  - Travel details (when applicable)
-  - Notes
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
-## Implementation Details
-
-- The client is initialized inside the component to ensure it's properly created
-- Uses the CreateLink endpoint to create a sample link instead of ListLinks
-- Displays a single link instead of a list of links
-
-## Troubleshooting
-
-If you see an error message saying "Failed to create link", check that:
-
-1. The backend server is running
-2. The backend URL is correctly configured in `src/App.tsx`
-3. CORS is properly configured on the backend to allow requests from the frontend
-
-## Building for Production
-
-To build the app for production:
-
-```bash
-yarn build
-```
-
-This creates optimized production files in the `build` folder that can be deployed to a web server.
-
-## Cleanup
-
-See `files-to-delete.md` for a list of files that can be safely deleted from the project.
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
