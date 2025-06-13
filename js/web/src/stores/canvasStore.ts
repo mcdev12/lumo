@@ -30,6 +30,7 @@ const useCanvasStore = create<CanvasState>((set, get) => ({
 	  id: '1',
 	  type: 'lume',
 	  position: {x: 100, y: 100},
+	  connectable: true,
 	  data: {
 		id: '1',
 		type: LumeType.CITY,
@@ -40,12 +41,61 @@ const useCanvasStore = create<CanvasState>((set, get) => ({
 	{
 	  id: '2',
 	  type: 'lume',
-	  position: {x: 300, y: 200},
+	  position: {x: 350, y: 150},
+	  connectable: true,
 	  data: {
 		id: '2',
 		type: LumeType.ATTRACTION,
 		name: 'Eiffel Tower',
 		description: 'Iconic iron lattice tower'
+	  },
+	},
+	{
+	  id: '3',
+	  type: 'lume',
+	  position: {x: 200, y: 250},
+	  connectable: true,
+	  data: {
+		id: '3',
+		type: LumeType.RESTAURANT,
+		name: 'Le Comptoir',
+		description: 'Traditional French bistro'
+	  },
+	},
+	{
+	  id: '4',
+	  type: 'lume',
+	  position: {x: 450, y: 100},
+	  connectable: true,
+	  data: {
+		id: '4',
+		type: LumeType.ACCOMMODATION,
+		name: 'Hotel Plaza',
+		description: 'Luxury hotel in city center'
+	  },
+	},
+	{
+	  id: '5',
+	  type: 'lume',
+	  position: {x: 150, y: 350},
+	  connectable: true,
+	  data: {
+		id: '5',
+		type: LumeType.TRANSPORT_HUB,
+		name: 'Metro Station',
+		description: 'Central metro hub'
+	  },
+	},
+	{
+	  id: '6',
+	  type: 'lume',
+	  position: {x: 400, y: 300},
+	  connectable: true,
+	  data: {
+		id: '6',
+		type: LumeType.ACTIVITY,
+		name: 'Seine Cruise',
+		description: 'Scenic river tour'
 	  },
 	},
   ],

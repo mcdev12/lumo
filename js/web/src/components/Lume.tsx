@@ -1,6 +1,7 @@
-import {Handle, Position} from '@xyflow/react';
+import {Handle, Position, useConnection} from '@xyflow/react';
 import Image from 'next/image';
 import {memo} from 'react';
+import {HoverCard, HoverCardContent, HoverCardTrigger,} from '@/components/ui/hover-card';
 import {LumeType} from '@/genproto/lume/v1/lume_pb';
 
 interface LumeNodeData {
@@ -13,6 +14,7 @@ interface LumeNodeData {
 interface LumeNodeProps {
   data: LumeNodeData;
   selected?: boolean;
+  id: string;
 }
 
 const lumeTypeToIcon: Record<LumeType, string> = {
@@ -41,34 +43,100 @@ const lumeTypeToColor: Record<LumeType, string> = {
   [LumeType.CUSTOM]: 'from-gray-50 to-gray-100 border-gray-300',
 };
 
-function Lume({data, selected}: LumeNodeProps) {
+function Lume({data, selected, id}: LumeNodeProps) {
   const iconPath = lumeTypeToIcon[data.type] || '/file.svg';
   const colorClass = lumeTypeToColor[data.type] || lumeTypeToColor[LumeType.UNSPECIFIED];
 
+  const connection = useConnection();
+
+  const isTarget = connection.inProgress && connection.fromNode.id !== id;
+  const isConnecting = connection.inProgress && connection.fromNode.id === id;
+
   return (
-	<>
-	  <Handle type="target" position={Position.Top} className="opacity-10"/>
-	  <Handle type="target" position={Position.Left} className="opacity-10"/>
-	  <div
-		className={`
-          w-14 h-14 rounded-full bg-gradient-to-br ${colorClass}
-          ${selected ? 'ring-2 ring-offset-2 ring-blue-500 shadow-lg' : 'shadow-sm'}
-          flex items-center justify-center
-          hover:shadow-md hover:scale-105 transition-all duration-200 cursor-pointer
-          border
-        `}
-	  >
-		<Image
-		  src={iconPath}
-		  alt={data.name}
-		  width={24}
-		  height={24}
-		  className="opacity-70"
+	<div className="customNode">
+	  {!connection.inProgress && (
+		<Handle
+		  position={Position.Right}
+		  type="source"
+		  style={{
+			width: '100%',
+			height: '100%',
+			opacity: 0,
+			top: 0,
+			left: 0,
+			borderRadius: '50%',
+			transform: 'none',
+		  }}
 		/>
-	  </div>
-	  <Handle type="target" position={Position.Right} className="opacity-10"/>
-	  <Handle type="source" position={Position.Bottom} className="opacity-10"/>
-	</>
+	  )}
+	  {(!connection.inProgress || isTarget) && (
+		<Handle
+		  position={Position.Left}
+		  type="target"
+		  style={{
+			width: '100%',
+			height: '100%',
+			opacity: 0,
+			top: 0,
+			left: 0,
+			borderRadius: '50%',
+			transform: 'none',
+		  }}
+		  isConnectableStart={false}
+		/>
+	  )}
+
+	  <HoverCard>
+		<HoverCardTrigger asChild>
+		  <div
+			className={`
+              w-14 h-14 rounded-full bg-gradient-to-br ${colorClass}
+              ${selected ? 'ring-2 ring-offset-2 ring-blue-500 shadow-lg' : 'shadow-sm'}
+              ${isConnecting ? 'ring-4 ring-green-400 ring-opacity-75 animate-pulse' : ''}
+              ${isTarget ? 'ring-2 ring-blue-400 ring-opacity-50 hover:ring-opacity-75' : ''}
+              flex items-center justify-center
+              hover:shadow-md hover:scale-105 transition-all duration-200 cursor-pointer
+              border
+            `}
+		  >
+			<Image
+			  src={iconPath}
+			  alt={data.name}
+			  width={24}
+			  height={24}
+			  className="opacity-70"
+			/>
+		  </div>
+		</HoverCardTrigger>
+		<HoverCardContent className="w-80">
+		  <div className="space-y-2">
+			<div className="flex items-center gap-2">
+			  <Image
+				src={iconPath}
+				alt={data.name}
+				width={16}
+				height={16}
+				className="opacity-70"
+			  />
+			  <h4 className="text-sm font-semibold">{data.name}</h4>
+			</div>
+			{data.description && (
+			  <p className="text-sm text-muted-foreground">
+				{data.description}
+			  </p>
+			)}
+			<div className="text-xs text-muted-foreground">
+			  Type: {LumeType[data.type]}
+			</div>
+			{connection.inProgress && (
+			  <div className="text-xs text-blue-600 font-medium">
+				{isConnecting ? 'Drag to another node to connect' : 'Drop here to connect'}
+			  </div>
+			)}
+		  </div>
+		</HoverCardContent>
+	  </HoverCard>
+	</div>
   );
 }
 
