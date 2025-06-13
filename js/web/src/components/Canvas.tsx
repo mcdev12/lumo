@@ -25,14 +25,21 @@ export default function Canvas() {
 		<Background
 		  color="rgba(166, 174, 191, 0.3)"
 		  variant={BackgroundVariant.Dots}
-		  gap={20}
-		  size={2}
+		  gap={24}
+		  size={1.5}
 		/>
 		<Controls/>
 		<MiniMap
 		  style={{
 			height: 80,
 			width: 120,
+			backgroundColor: 'rgba(253, 250, 246, 0.75)',
+		  }}
+		  nodeColor={(node) => {
+			const typeColors: Record<string, string> = {
+			  lume: '#fed7aa',
+			};
+			return typeColors[node.type || ''] || '#e5e7eb';
 		  }}
 		/>
 	  </ReactFlow>
