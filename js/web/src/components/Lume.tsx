@@ -1,8 +1,9 @@
 import {Handle, Position, useConnection} from '@xyflow/react';
 import Image from 'next/image';
 import {memo} from 'react';
-import {HoverCard, HoverCardContent, HoverCardTrigger,} from '@/components/ui/hover-card';
+import {HoverCard, HoverCardContent, HoverCardTrigger} from '@/components/ui/hover-card';
 import {LumeType} from '@/genproto/lume/v1/lume_pb';
+import '@/styles/hover-card.css';
 
 interface LumeNodeData {
   id: string;
@@ -90,14 +91,14 @@ function Lume({data, selected, id}: LumeNodeProps) {
 		<HoverCardTrigger asChild>
 		  <div
 			className={`
-              w-14 h-14 rounded-full bg-gradient-to-br ${colorClass}
-              ${selected ? 'ring-2 ring-offset-2 ring-blue-500 shadow-lg' : 'shadow-sm'}
-              ${isConnecting ? 'ring-4 ring-green-400 ring-opacity-75 animate-pulse' : ''}
-              ${isTarget ? 'ring-2 ring-blue-400 ring-opacity-50 hover:ring-opacity-75' : ''}
-              flex items-center justify-center
-              hover:shadow-md hover:scale-105 transition-all duration-200 cursor-pointer
-              border
-            `}
+	          w-14 h-14 rounded-full bg-gradient-to-br ${colorClass}
+	          ${selected ? 'ring-2 ring-offset-2 ring-blue-500 shadow-lg' : 'shadow-sm'}
+	          ${isConnecting ? 'ring-4 ring-green-400 ring-opacity-75 animate-pulse' : ''}
+	          ${isTarget ? 'ring-2 ring-blue-400 ring-opacity-50 hover:ring-opacity-75' : ''}
+	          flex items-center justify-center
+	          hover:shadow-md hover:scale-105 transition-all duration-200 cursor-pointer
+	          border
+	        `}
 		  >
 			<Image
 			  src={iconPath}
@@ -128,11 +129,11 @@ function Lume({data, selected, id}: LumeNodeProps) {
 			<div className="text-xs text-muted-foreground">
 			  Type: {LumeType[data.type]}
 			</div>
-			{connection.inProgress && (
-			  <div className="text-xs text-blue-600 font-medium">
-				{isConnecting ? 'Drag to another node to connect' : 'Drop here to connect'}
-			  </div>
-			)}
+			{/*{connection.inProgress && (*/}
+			{/*  <div className="text-xs text-blue-600 font-medium">*/}
+			{/*	{isConnecting ? 'Drag to another node to connect' : 'Drop here to connect'}*/}
+			{/*  </div>*/}
+			{/*)}*/}
 		  </div>
 		</HoverCardContent>
 	  </HoverCard>
