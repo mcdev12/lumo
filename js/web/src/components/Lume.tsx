@@ -129,11 +129,6 @@ function Lume({data, selected, id}: LumeNodeProps) {
 			<div className="text-xs text-muted-foreground">
 			  Type: {LumeType[data.type]}
 			</div>
-			{/*{connection.inProgress && (*/}
-			{/*  <div className="text-xs text-blue-600 font-medium">*/}
-			{/*	{isConnecting ? 'Drag to another node to connect' : 'Drop here to connect'}*/}
-			{/*  </div>*/}
-			{/*)}*/}
 		  </div>
 		</HoverCardContent>
 	  </HoverCard>

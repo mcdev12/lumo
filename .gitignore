@@ -37,3 +37,5 @@ go.work.sum
 third_party/
 
 CLAUDE.md
+
+/rs/target

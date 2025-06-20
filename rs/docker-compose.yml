@@ -1,0 +1,20 @@
+services:
+  db:
+    image: postgres:15
+    container_name: lumo_postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: lumo_dev
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 3s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  postgres_data:
